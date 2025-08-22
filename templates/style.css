@@ -5,7 +5,6 @@
 */
 
 :root {
-    /* Set color-scheme to help browser's default styles adapt */
     color-scheme: light dark;
 
     /* Light Mode Colors */
@@ -105,7 +104,7 @@ body {
 .login-header {
     text-align: center;
     padding: 2.5rem 2rem 1.5rem;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
     color: white;
 }
 
@@ -175,7 +174,7 @@ body {
 
 .input-group .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color), 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(93, 95, 239, 0.25); /* Using RGBA with a direct value for consistency */
     background-color: var(--input-bg);
 }
 
@@ -244,13 +243,6 @@ html, body {
     background-color: var(--background-color);
 }
 
-/* Sidebar Fix: Use a more specific selector */
-body.dark-mode .sidebar {
-    background-color: var(--sidebar-bg);
-    box-shadow: var(--shadow);
-    transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
-}
-
 .sidebar {
     background-color: var(--sidebar-bg);
     box-shadow: var(--shadow);
@@ -265,7 +257,7 @@ body.dark-mode .sidebar {
     align-items: center;
     padding: 0.75rem 1rem;
     border-radius: 8px;
-    /*color: var(--text-color);*/
+    color: var(--text-color); /* Corrected to use the text color variable */
     transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
@@ -275,11 +267,7 @@ body.dark-mode .sidebar {
 }
 
 .sidebar-nav .nav-link.active {
-    /*background-color: var(--primary-color);*/
-    color: white;
-}
-
-.sidebar-nav .nav-link.active i {
+    background-color: var(--primary-color);
     color: white;
 }
 
@@ -291,7 +279,7 @@ body.dark-mode .sidebar {
 }
 
 .sidebar-nav .nav-link.active i {
-    color: inherit;
+    color: white;
 }
 
 .main-content {
@@ -322,22 +310,15 @@ body.dark-mode .sidebar {
     color: var(--text-color);
 }
 
-/*
-    Table Fix: Applying background color to tbody and table cells directly
-*/
 .table {
     background-color: var(--card-bg);
     color: var(--text-color);
 }
 
-.table thead, .table tbody {
-    background-color: var(--card-bg);
-}
-
 .table th, .table td {
     border-top: 1px solid var(--border-color);
-    color: var(--text-color);
-    background-color: var(--card-bg);
+    color: inherit; /* Inherit color from the table */
+    background-color: inherit; /* Inherit background from the table */
 }
 
 .table-striped tbody tr:nth-of-type(odd) td {
@@ -366,7 +347,7 @@ body.dark-mode .sidebar {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color), 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(93, 95, 239, 0.25);
     background-color: var(--input-bg);
     color: var(--text-color);
 }
@@ -434,10 +415,6 @@ body.dark-mode .sidebar {
     }
 }
 
-.sidebar {
-    background-color: var(--sidebar-bg);
-}
-
 .link-dark {
-    color: inherit !important; /* This will make it inherit the text color from its parent element */
+    color: inherit !important;
 }
