@@ -587,37 +587,33 @@ function plotDashboardChart(data) {
 }
 
 // Data management functions
+// Data management functions
 async function addExpense(e) {
     e.preventDefault();
-
     const finalCategory = getFinalCategory();
     if (!finalCategory) {
         showMessage('오류', '카테고리를 입력해주세요.');
         return;
     }
-
     const newExpense = {
         userId: currentUser.uid,
         type: document.getElementById('type').value,
         date: document.getElementById('date').value || getLocalDate(),
         description: document.getElementById('description').value,
         category: finalCategory,
-        amount: parseInt(document.getElementById('amount').value),
+        amount: parseFloat(document.getElementById('amount').value),
         card: document.getElementById('card').value,
         month: getMonthKey(document.getElementById('date').value || getLocalDate()),
         timestamp: new Date().toISOString()
     };
-
     try {
         await addDoc(collection(db, 'expenses'), newExpense);
-
         document.getElementById('addForm').reset();
         document.getElementById('date').value = getLocalDate();
         document.getElementById('customCategoryGroup').style.display = 'none';
-
         renderDashboard();
-        refreshTable();
-        populateFilterCategories();
+        refreshTable(); // Add this line
+        showMonthlyExpenses(); // Add this line
         showMessage('성공', '항목이 성공적으로 추가되었습니다.');
     } catch (error) {
         console.error('Error adding expense:', error);

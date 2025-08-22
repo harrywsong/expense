@@ -403,21 +403,28 @@
             <div id="budgets" class="content-section">
                 <h1 class="mb-4">예산 관리</h1>
                 <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">예산 추가/수정</h5>
-                        <form id="budgetForm">
-                            <div class="mb-3">
-                                <label for="budgetCategory" class="form-label">카테고리</label>
-                                <input type="text" class="form-control" id="budgetCategory" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="budgetAmount" class="form-label">예산 금액</label>
-                                <input type="number" step="0.01" class="form-control" id="budgetAmount" required>
-                            </div>
-                            <button type="button" class="btn btn-primary" id="addBudgetBtn">예산 설정</button>
-                        </form>
-                    </div>
-                </div>
+    <div class="card-body">
+        <h5 class="card-title">예산 추가/수정</h5>
+        <form id="budgetForm">
+            <div class="mb-3">
+                <label for="budgetCategory" class="form-label">카테고리</label>
+                <select class="form-select" id="budgetCategory" required>
+                    <option value="">카테고리 선택</option>
+                    <option value="그로서리">그로서리</option>
+                    <option value="외식">외식</option>
+                    <option value="주유+주차">주유+주차</option>
+                    <option value="고정비용">고정비용</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="budgetAmount" class="form-label">예산 금액</label>
+                <input type="number" step="0.01" class="form-control" id="budgetAmount" required>
+            </div>
+            <button type="button" class="btn btn-primary" id="addBudgetBtn">예산 설정</button>
+        </form>
+    </div>
+</div>
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">설정된 예산</h5>
