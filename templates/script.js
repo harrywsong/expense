@@ -453,6 +453,8 @@ function setupNavigation() {
     // Budget controls
     document.getElementById('addBudgetBtn').addEventListener('click', setBudget);
     document.getElementById('budgetCategory').addEventListener('change', handleBudgetCategoryChange); // Add this line
+
+    document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
 }
 
 // Utility functions
