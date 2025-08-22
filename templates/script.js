@@ -13,6 +13,7 @@ const appContainer = document.getElementById('app-container');
 
 // Demo login function
 function demoLogin() {
+    console.log('Demo login started');
     currentUser = { uid: 'demo-user', email: 'demo@example.com' };
     loadingSpinner.style.display = 'none';
     loginPage.style.display = 'none';
@@ -20,13 +21,16 @@ function demoLogin() {
 
     // Load demo data
     loadDemoData();
+    console.log('Demo data loaded:', expenses);
 
     // Wait for elements to be visible before rendering dashboard
     setTimeout(() => {
+        console.log('Rendering dashboard...');
         renderDashboard();
         populateFilterCategories();
         renderBudgetList();
-    }, 100);
+        console.log('Dashboard render complete');
+    }, 200);
 }
 
 // Load demo data
@@ -156,13 +160,20 @@ function showMessage(title, body) {
 
 // Dashboard rendering
 function renderDashboard() {
+    console.log('renderDashboard called');
     const now = new Date();
     const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
 
+    console.log('Current month key:', thisMonthKey);
+    console.log('Last month key:', lastMonthKey);
+
     const expensesThisMonth = expenses[thisMonthKey] || [];
     const expensesLastMonth = expenses[lastMonthKey] || [];
+
+    console.log('Expenses this month:', expensesThisMonth);
+    console.log('Expenses last month:', expensesLastMonth);
 
     let incomeThisMonth = 0;
     let expenseThisMonth = 0;
@@ -177,15 +188,32 @@ function renderDashboard() {
         if (exp.type === 'expense') expenseLastMonth += exp.amount;
     });
 
-    document.getElementById('dashboard-income').textContent = formatCurrency(incomeThisMonth);
-    document.getElementById('dashboard-expense').textContent = formatCurrency(expenseThisMonth);
-    document.getElementById('dashboard-prev-expense').textContent = formatCurrency(expenseLastMonth);
-    document.getElementById('dashboard-net-income').textContent = formatCurrency(incomeThisMonth - expenseThisMonth);
+    console.log('Calculated values:', {
+        incomeThisMonth,
+        expenseThisMonth,
+        expenseLastMonth
+    });
+
+    // Update dashboard values
+    const incomeEl = document.getElementById('dashboard-income');
+    const expenseEl = document.getElementById('dashboard-expense');
+    const prevExpenseEl = document.getElementById('dashboard-prev-expense');
+    const netIncomeEl = document.getElementById('dashboard-net-income');
+
+    if (incomeEl) incomeEl.textContent = formatCurrency(incomeThisMonth);
+    if (expenseEl) expenseEl.textContent = formatCurrency(expenseThisMonth);
+    if (prevExpenseEl) prevExpenseEl.textContent = formatCurrency(expenseLastMonth);
+    if (netIncomeEl) netIncomeEl.textContent = formatCurrency(incomeThisMonth - expenseThisMonth);
+
+    console.log('Dashboard values updated');
 
     // Only plot chart if we have a canvas element
     const chartElement = document.getElementById('dashboardChart');
     if (chartElement) {
+        console.log('Plotting dashboard chart');
         plotDashboardChart(expensesThisMonth);
+    } else {
+        console.log('Chart element not found');
     }
 
     checkBudgets();
