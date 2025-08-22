@@ -155,87 +155,87 @@ async function initializeUserData(uid) {
     }
 }
 
-async function loadDemoDataForUser(uid) {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
-
-    const demoExpenses = [
-        {
-            userId: uid,
-            type: 'expense',
-            date: `${currentMonth}-01`,
-            description: '마트 장보기',
-            category: '그로서리',
-            amount: 50000,
-            card: 'BMO Debit',
-            month: currentMonth,
-            timestamp: new Date().toISOString()
-        },
-        {
-            userId: uid,
-            type: 'expense',
-            date: `${currentMonth}-03`,
-            description: '카페',
-            category: '외식',
-            amount: 8000,
-            card: '현금',
-            month: currentMonth,
-            timestamp: new Date().toISOString()
-        },
-        {
-            userId: uid,
-            type: 'income',
-            date: `${currentMonth}-01`,
-            description: '월급',
-            category: '급여',
-            amount: 3000000,
-            card: 'TD',
-            month: currentMonth,
-            timestamp: new Date().toISOString()
-        },
-        {
-            userId: uid,
-            type: 'expense',
-            date: `${currentMonth}-05`,
-            description: '주유',
-            category: '주유+주차',
-            amount: 60000,
-            card: 'BMO WJ',
-            month: currentMonth,
-            timestamp: new Date().toISOString()
-        },
-        {
-            userId: uid,
-            type: 'expense',
-            date: `${currentMonth}-07`,
-            description: '휴대폰 요금',
-            category: '고정비용',
-            amount: 45000,
-            card: 'BMO JH',
-            month: currentMonth,
-            timestamp: new Date().toISOString()
-        }
-    ];
-
-    // Add demo expenses
-    for (const expense of demoExpenses) {
-        await addDoc(collection(db, 'expenses'), expense);
-    }
-
-    // Add demo budgets
-    const demoBudgets = [
-        { userId: uid, category: '그로서리', amount: 150000 },
-        { userId: uid, category: '외식', amount: 100000 },
-        { userId: uid, category: '주유+주차', amount: 120000 },
-        { userId: uid, category: '고정비용', amount: 200000 }
-    ];
-
-    for (const budget of demoBudgets) {
-        await setDoc(doc(db, 'budgets', `${uid}_${budget.category}`), budget);
-    }
-}
+// async function loadDemoDataForUser(uid) {
+//     const now = new Date();
+//     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+//     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+//     const lastMonthKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+//
+//     const demoExpenses = [
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-01`,
+//             description: '마트 장보기',
+//             category: '그로서리',
+//             amount: 50000,
+//             card: 'BMO Debit',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-03`,
+//             description: '카페',
+//             category: '외식',
+//             amount: 8000,
+//             card: '현금',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'income',
+//             date: `${currentMonth}-01`,
+//             description: '월급',
+//             category: '급여',
+//             amount: 3000000,
+//             card: 'TD',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-05`,
+//             description: '주유',
+//             category: '주유+주차',
+//             amount: 60000,
+//             card: 'BMO WJ',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-07`,
+//             description: '휴대폰 요금',
+//             category: '고정비용',
+//             amount: 45000,
+//             card: 'BMO JH',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         }
+//     ];
+//
+//     // Add demo expenses
+//     for (const expense of demoExpenses) {
+//         await addDoc(collection(db, 'expenses'), expense);
+//     }
+//
+//     // Add demo budgets
+//     const demoBudgets = [
+//         { userId: uid, category: '그로서리', amount: 150000 },
+//         { userId: uid, category: '외식', amount: 100000 },
+//         { userId: uid, category: '주유+주차', amount: 120000 },
+//         { userId: uid, category: '고정비용', amount: 200000 }
+//     ];
+//
+//     for (const budget of demoBudgets) {
+//         await setDoc(doc(db, 'budgets', `${uid}_${budget.category}`), budget);
+//     }
+// }
 
 async function logout() {
     try {
