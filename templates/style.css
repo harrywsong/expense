@@ -244,6 +244,13 @@ html, body {
     background-color: var(--background-color);
 }
 
+/* Sidebar Fix: Use a more specific selector */
+body.dark-mode .sidebar {
+    background-color: var(--sidebar-bg);
+    box-shadow: var(--shadow);
+    transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
 .sidebar {
     background-color: var(--sidebar-bg);
     box-shadow: var(--shadow);
