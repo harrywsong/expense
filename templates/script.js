@@ -1,3 +1,4 @@
+// Korean Personal Finance App (가계부) - Pure JavaScript
 // In-memory data storage (replacing Firebase for demo)
 let expenses = {};
 let budgets = {};
