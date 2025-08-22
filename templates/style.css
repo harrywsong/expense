@@ -19,6 +19,7 @@
     --table-hover: #e9ecef;
     --input-bg: #FFFFFF;
     --input-border: #e9ecef;
+    --sidebar-width: 260px;
 }
 
 body.dark-mode {
@@ -230,7 +231,7 @@ body {
 .sidebar {
     width: var(--sidebar-width);
     height: 100vh;
-    background-color: var(--sidebar-bg) !important;
+    background-color: var(--sidebar-bg);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -247,7 +248,8 @@ body {
     padding: 2rem;
     flex-grow: 1;
     background-color: var(--background-color);
-    transition: background-color 0.3s;
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .content-section {
