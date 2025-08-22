@@ -607,6 +607,7 @@ function plotDashboardChart(data) {
 // Data management functions
 // Data management functions
 // Data management functions
+// Data management functions
 async function addExpense(e) {
     e.preventDefault();
     const finalCategory = getFinalCategory();
@@ -631,8 +632,8 @@ async function addExpense(e) {
         document.getElementById('date').value = getLocalDate();
         document.getElementById('customCategoryGroup').style.display = 'none';
         renderDashboard();
-        refreshTable();
-        showMonthlyExpenses();
+        refreshTable(); // This line updates "All Transactions"
+        showMonthlyExpenses(); // This line updates "Monthly Breakdown"
         showMessage('Success', 'Item successfully added.');
     } catch (error) {
         console.error('Error adding expense:', error);
