@@ -148,10 +148,94 @@ async function initializeUserData(uid) {
             lastLogin: new Date().toISOString()
         });
 
+        // Initialize with demo data
+        await loadDemoDataForUser(uid);
     } catch (error) {
         console.error('Error initializing user data:', error);
     }
 }
+
+// async function loadDemoDataForUser(uid) {
+//     const now = new Date();
+//     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+//     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+//     const lastMonthKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+//
+//     const demoExpenses = [
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-01`,
+//             description: '마트 장보기',
+//             category: '그로서리',
+//             amount: 50000,
+//             card: 'BMO Debit',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-03`,
+//             description: '카페',
+//             category: '외식',
+//             amount: 8000,
+//             card: '현금',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'income',
+//             date: `${currentMonth}-01`,
+//             description: '월급',
+//             category: '급여',
+//             amount: 3000000,
+//             card: 'TD',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-05`,
+//             description: '주유',
+//             category: '주유+주차',
+//             amount: 60000,
+//             card: 'BMO WJ',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-07`,
+//             description: '휴대폰 요금',
+//             category: '고정비용',
+//             amount: 45000,
+//             card: 'BMO JH',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         }
+//     ];
+//
+//     // Add demo expenses
+//     for (const expense of demoExpenses) {
+//         await addDoc(collection(db, 'expenses'), expense);
+//     }
+//
+//     // Add demo budgets
+//     const demoBudgets = [
+//         { userId: uid, category: '그로서리', amount: 150000 },
+//         { userId: uid, category: '외식', amount: 100000 },
+//         { userId: uid, category: '주유+주차', amount: 120000 },
+//         { userId: uid, category: '고정비용', amount: 200000 }
+//     ];
+//
+//     for (const budget of demoBudgets) {
+//         await setDoc(doc(db, 'budgets', `${uid}_${budget.category}`), budget);
+//     }
+// }
 
 async function logout() {
     try {
@@ -364,7 +448,10 @@ function setupNavigation() {
     document.getElementById('compareMonth2').addEventListener('change', compareExpenses);
 
     // Budget controls
-    document.getElementById('addBudgetForm').addEventListener('submit', setBudget);
+    document.getElementById('addBudgetBtn').addEventListener('click', setBudget);
+
+    // Budget controls
+    document.getElementById('addBudgetBtn').addEventListener('click', setBudget);
     document.getElementById('budgetCategory').addEventListener('change', handleBudgetCategoryChange); // Add this line
 
     document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
@@ -520,6 +607,10 @@ function plotDashboardChart(data) {
 }
 
 // Data management functions
+// Data management functions
+// Data management functions
+// Data management functions
+// Data management functions
 async function addExpense(e) {
     e.preventDefault();
     const finalCategory = getFinalCategory();
@@ -544,15 +635,14 @@ async function addExpense(e) {
         document.getElementById('date').value = getLocalDate();
         document.getElementById('customCategoryGroup').style.display = 'none';
         renderDashboard();
-        refreshTable();
-        showMonthlyExpenses();
+        refreshTable(); // This line updates "All Transactions"
+        showMonthlyExpenses(); // This line updates "Monthly Breakdown"
         showMessage('성공', '항목이 성공적으로 추가되었습니다.');
     } catch (error) {
         console.error('Error adding expense:', error);
         showMessage('Error', 'Failed to add item.');
     }
 }
-
 async function getFilteredExpenses() {
     const fromDate = document.getElementById('fromDate').value;
     const toDate = document.getElementById('toDate').value;
@@ -677,7 +767,7 @@ async function saveEdit() {
         date: document.getElementById('edit-date').value,
         description: document.getElementById('edit-description').value,
         category: finalCategory,
-        amount: parseFloat(document.getElementById('edit-amount').value),
+        amount: parseInt(document.getElementById('edit-amount').value),
         card: document.getElementById('edit-card').value,
         month: getMonthKey(document.getElementById('edit-date').value)
     };
@@ -789,6 +879,7 @@ async function showMonthlyExpenses(monthKey = getMonthKey(getLocalDate())) {
 async function plotChart() {
     if (mainChart) {
         mainChart.destroy();
+        mainChart = null;
     }
 
     const month = document.getElementById('vizMonth').value || getMonthKey(getLocalDate());
@@ -805,8 +896,8 @@ async function plotChart() {
 
         const categorySums = {};
         querySnapshot.forEach(doc => {
-            const expense = doc.data();
-            categorySums[expense.category] = (categorySums[expense.category] || 0) + expense.amount;
+            const exp = doc.data();
+            categorySums[exp.category] = (categorySums[exp.category] || 0) + exp.amount;
         });
 
         const labels = Object.keys(categorySums);
@@ -814,299 +905,116 @@ async function plotChart() {
 
         if (labels.length === 0) {
             labels.push('데이터 없음');
-            values.push(1);
+            values.push(0);
         }
 
         const ctx = document.getElementById('vizChart');
         if (!ctx) return;
 
-        mainChart = new Chart(ctx, {
+        const config = {
             type: type,
             data: {
                 labels: labels,
                 datasets: [{
                     label: '지출',
                     data: values,
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED', '#A4C639'],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    legend: { position: 'top' },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return `${context.label}: ${formatCurrency(context.parsed)}`;
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const actualValue = type === 'pie' ? value : value.y || value;
+                                return `${label}: ${formatCurrency(actualValue)}`;
                             }
                         }
                     }
-                }
+                },
+                scales: type === 'pie' ? {} : { y: { beginAtZero: true } }
             }
-        });
+        };
+
+        mainChart = new Chart(ctx, config);
     } catch (error) {
-        console.error('Error plotting chart:', error);
-    }
-}
-
-async function setBudget(e) {
-    e.preventDefault();
-    const budgetCategorySelect = document.getElementById('budgetCategory');
-    const budgetAmountInput = document.getElementById('budgetAmount');
-    const customCategoryInput = document.getElementById('budgetCustomCategory');
-
-    let category = budgetCategorySelect.value;
-    if (category === '기타') {
-        category = customCategoryInput.value.trim();
-    }
-
-    if (!category) {
-        showMessage('오류', '카테고리를 입력해주세요.');
-        return;
-    }
-
-    const amount = parseFloat(budgetAmountInput.value);
-    if (isNaN(amount) || amount <= 0) {
-        showMessage('오류', '유효한 금액을 입력해주세요.');
-        return;
-    }
-
-    try {
-        const budgetDocRef = doc(db, 'budgets', `${currentUser.uid}_${category}`);
-        await setDoc(budgetDocRef, {
-            userId: currentUser.uid,
-            category: category,
-            amount: amount,
-            timestamp: new Date().toISOString()
-        });
-        document.getElementById('addBudgetForm').reset();
-        document.getElementById('budgetCustomCategoryGroup').style.display = 'none';
-        bootstrap.Modal.getInstance(document.getElementById('addBudgetModal')).hide();
-        renderBudgetList();
-        checkBudgets();
-        showMessage('성공', `"${category}"에 대한 예산이 성공적으로 설정되었습니다.`);
-    } catch (error) {
-        console.error('Error setting budget:', error);
-        showMessage('오류', '예산 설정에 실패했습니다.');
-    }
-}
-
-async function renderBudgetList() {
-    const budgetListBody = document.getElementById('budgetList');
-    if (!budgetListBody) return;
-    budgetListBody.innerHTML = '';
-
-    const now = new Date();
-    const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-    try {
-        const budgetsQuery = query(
-            collection(db, 'budgets'),
-            where('userId', '==', currentUser.uid)
-        );
-        const budgetsSnapshot = await getDocs(budgetsQuery);
-        const budgets = {};
-        budgetsSnapshot.forEach(doc => {
-            const budget = doc.data();
-            budgets[budget.category] = budget;
-        });
-
-        const expensesQuery = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', thisMonthKey),
-            where('type', '==', 'expense')
-        );
-        const expensesSnapshot = await getDocs(expensesQuery);
-        const currentSpending = {};
-        expensesSnapshot.forEach(doc => {
-            const exp = doc.data();
-            currentSpending[exp.category] = (currentSpending[exp.category] || 0) + exp.amount;
-        });
-
-        if (Object.keys(budgets).length === 0) {
-            budgetListBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">아직 설정된 예산이 없습니다.</td></tr>`;
-            return;
-        }
-
-        for (const category in budgets) {
-            const budget = budgets[category];
-            const spent = currentSpending[category] || 0;
-            const progress = (spent / budget.amount) * 100;
-            const progressColor = progress > 100 ? 'bg-danger' : 'bg-primary';
-
-            const row = budgetListBody.insertRow();
-            row.innerHTML = `
-                <td>${category}</td>
-                <td>${formatCurrency(budget.amount)}</td>
-                <td>${formatCurrency(spent)}</td>
-                <td>
-                    <div class="progress" role="progressbar" style="height: 25px;">
-                        <div class="progress-bar ${progressColor}" style="width: ${Math.min(100, progress)}%">${progress.toFixed(1)}%</div>
-                    </div>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBudget('${category}')"><i class="fas fa-trash-alt"></i></button>
-                </td>
-            `;
-        }
-
-    } catch (error) {
-        console.error('Error rendering budget list:', error);
-    }
-}
-
-async function deleteBudget(category) {
-    if (!confirm(`정말로 "${category}" 예산을 삭제하시겠습니까?`)) return;
-
-    try {
-        const budgetDocRef = doc(db, 'budgets', `${currentUser.uid}_${category}`);
-        await deleteDoc(budgetDocRef);
-        renderBudgetList();
-        checkBudgets();
-        showMessage('성공', '예산이 성공적으로 삭제되었습니다.');
-    } catch (error) {
-        console.error('Error deleting budget:', error);
-        showMessage('오류', '예산 삭제에 실패했습니다.');
-    }
-}
-
-async function checkBudgets() {
-    const now = new Date();
-    const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const budgetAlertsEl = document.getElementById('budget-alerts');
-    budgetAlertsEl.innerHTML = '';
-    const exceededBudgets = [];
-
-    try {
-        const budgetsQuery = query(
-            collection(db, 'budgets'),
-            where('userId', '==', currentUser.uid)
-        );
-        const budgetsSnapshot = await getDocs(budgetsQuery);
-        const budgets = {};
-        budgetsSnapshot.forEach(doc => {
-            const budget = doc.data();
-            budgets[budget.category] = budget.amount;
-        });
-
-        const expensesQuery = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', thisMonthKey),
-            where('type', '==', 'expense')
-        );
-        const expensesSnapshot = await getDocs(expensesQuery);
-        const currentSpending = {};
-        expensesSnapshot.forEach(doc => {
-            const exp = doc.data();
-            currentSpending[exp.category] = (currentSpending[exp.category] || 0) + exp.amount;
-        });
-
-        for (const category in budgets) {
-            const spent = currentSpending[category] || 0;
-            if (spent > budgets[category]) {
-                exceededBudgets.push({ category, spent, budget: budgets[category] });
-            }
-        }
-
-        if (exceededBudgets.length > 0) {
-            let alertHtml = `<div class="alert alert-warning" role="alert"><strong>경고!</strong> 예산이 초과된 카테고리가 있습니다:<ul>`;
-            exceededBudgets.forEach(item => {
-                alertHtml += `<li><strong>${item.category}:</strong> 현재 지출 ${formatCurrency(item.spent)} (예산 ${formatCurrency(item.budget)})</li>`;
-            });
-            alertHtml += `</ul></div>`;
-            budgetAlertsEl.innerHTML = alertHtml;
-        }
-
-    } catch (error) {
-        console.error('Error checking budgets:', error);
+        console.error('Chart error:', error);
     }
 }
 
 async function compareExpenses() {
     const month1 = document.getElementById('compareMonth1').value;
     const month2 = document.getElementById('compareMonth2').value;
-    const resultsEl = document.getElementById('compareResults');
-    resultsEl.innerHTML = '';
+    const resultsDiv = document.getElementById('compareResults');
+    if (!resultsDiv) return;
+
+    resultsDiv.innerHTML = '';
 
     if (!month1 || !month2) {
-        resultsEl.innerHTML = '<p class="text-muted">비교할 두 달을 선택하세요.</p>';
+        resultsDiv.innerHTML = '<p class="text-muted">비교할 두 달을 선택하세요.</p>';
         return;
     }
 
     try {
-        const months = [month1, month2];
-        const monthData = {};
+        // Get expenses for first month
+        const q1 = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', month1),
+            where('type', '==', 'expense')
+        );
+        const snapshot1 = await getDocs(q1);
 
-        for (const month of months) {
-            const q = query(
-                collection(db, 'expenses'),
-                where('userId', '==', currentUser.uid),
-                where('month', '==', month)
-            );
-            const querySnapshot = await getDocs(q);
-            let totalIncome = 0;
-            let totalExpense = 0;
-            querySnapshot.forEach(doc => {
-                const exp = doc.data();
-                if (exp.type === 'income') {
-                    totalIncome += exp.amount;
-                } else {
-                    totalExpense += exp.amount;
-                }
-            });
-            monthData[month] = { totalIncome, totalExpense };
-        }
+        // Get expenses for second month
+        const q2 = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', month2),
+            where('type', '==', 'expense')
+        );
+        const snapshot2 = await getDocs(q2);
 
-        const data1 = monthData[month1];
-        const data2 = monthData[month2];
+        const categorySums1 = {};
+        snapshot1.forEach(doc => {
+            const exp = doc.data();
+            categorySums1[exp.category] = (categorySums1[exp.category] || 0) + exp.amount;
+        });
 
-        let resultHtml = `
-            <h4>${month1} vs ${month2}</h4>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>구분</th>
-                        <th>${month1}</th>
-                        <th>${month2}</th>
-                        <th>차이</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>총 수입</td>
-                        <td>${formatCurrency(data1.totalIncome)}</td>
-                        <td>${formatCurrency(data2.totalIncome)}</td>
-                        <td>${formatCurrency(data2.totalIncome - data1.totalIncome)}</td>
-                    </tr>
-                    <tr>
-                        <td>총 지출</td>
-                        <td>${formatCurrency(data1.totalExpense)}</td>
-                        <td>${formatCurrency(data2.totalExpense)}</td>
-                        <td>${formatCurrency(data2.totalExpense - data1.totalExpense)}</td>
-                    </tr>
-                    <tr>
-                        <td>순수입</td>
-                        <td>${formatCurrency(data1.totalIncome - data1.totalExpense)}</td>
-                        <td>${formatCurrency(data2.totalIncome - data2.totalExpense)}</td>
-                        <td>${formatCurrency((data2.totalIncome - data2.totalExpense) - (data1.totalIncome - data1.totalExpense))}</td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
+        const categorySums2 = {};
+        snapshot2.forEach(doc => {
+            const exp = doc.data();
+            categorySums2[exp.category] = (categorySums2[exp.category] || 0) + exp.amount;
+        });
 
-        resultsEl.innerHTML = resultHtml;
+        const allCategories = [...new Set([...Object.keys(categorySums1), ...Object.keys(categorySums2)])];
+        allCategories.forEach(category => {
+            const sum1 = categorySums1[category] || 0;
+            const sum2 = categorySums2[category] || 0;
+            const difference = sum2 - sum1;
+            const diffClass = difference > 0 ? 'text-danger' : 'text-success';
+            const diffSign = difference > 0 ? '+' : '';
+            resultsDiv.innerHTML += `
+                <p><strong>${category}:</strong> 
+                ${formatCurrency(sum1)} vs ${formatCurrency(sum2)} 
+                (<span class="${diffClass}">${diffSign}${formatCurrency(difference)}</span>)
+                </p>`;
+        });
     } catch (error) {
         console.error('Error comparing expenses:', error);
-        resultsEl.innerHTML = '<p class="text-danger">비교 데이터를 불러오는 중 오류가 발생했습니다.</p>';
+        resultsDiv.innerHTML = '<p class="text-danger">비교 데이터를 불러오는 중 오류가 발생했습니다.</p>';
     }
 }
 
-async function exportCSV() {
+async function exportMonth() {
     const month = document.getElementById('exportMonth').value;
+
     if (!month) {
-        showMessage('오류', '데이터를 내보낼 월을 선택해주세요.');
+        showMessage('알림', '내보낼 월을 선택하세요.');
         return;
     }
 
@@ -1120,25 +1028,24 @@ async function exportCSV() {
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            showMessage('정보', '선택한 월에 데이터가 없습니다.');
+            showMessage('알림', '선택한 월에 내보낼 데이터가 없습니다.');
             return;
         }
 
-        const headers = ["날짜", "구분", "내용", "카테고리", "금액", "결제수단", "월"];
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n";
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += "날짜,구분,내용,카테고리,금액,결제수단\n";
 
         querySnapshot.forEach(doc => {
             const exp = doc.data();
             const row = [
                 exp.date,
                 exp.type === 'income' ? '수입' : '지출',
-                `"${exp.description.replace(/"/g, '""')}"`, // Handle commas and quotes in description
-                `"${exp.category.replace(/"/g, '""')}"`,
+                exp.description,
+                exp.category,
                 exp.amount,
-                exp.card,
-                exp.month
-            ];
-            csvContent += row.join(",") + "\n";
+                exp.card
+            ].map(e => `"${e}"`).join(',');
+            csvContent += row + "\n";
         });
 
         const encodedUri = encodeURI(csvContent);
@@ -1148,44 +1055,293 @@ async function exportCSV() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
     } catch (error) {
-        console.error('Error exporting CSV:', error);
-        showMessage('오류', 'CSV 내보내기에 실패했습니다.');
+        console.error('Error exporting data:', error);
+        showMessage('오류', '데이터 내보내기에 실패했습니다.');
     }
 }
 
-window.openEditModal = openEditModal;
-window.saveEdit = saveEdit;
-window.deleteExpense = deleteExpense;
-window.deleteBudget = deleteBudget;
-window.setBudget = setBudget;
+async function setBudget(e) {
+    e.preventDefault();
+    const finalCategory = document.getElementById('budgetCategory').value === '기타' ? document.getElementById('budgetCustomCategory').value.trim() : document.getElementById('budgetCategory').value;
 
-// Initialize event listeners on page load
-document.addEventListener('DOMContentLoaded', () => {
-    setupNavigation();
-    document.getElementById('date').value = getLocalDate();
-    document.getElementById('vizMonth').value = getMonthKey(getLocalDate());
-    document.getElementById('compareMonth1').value = getMonthKey(getLocalDate());
-    const prev = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
-    document.getElementById('compareMonth2').value = getMonthKey(prev.toISOString().substring(0, 10));
+    if (!finalCategory) {
+        showMessage('오류', '카테고리를 입력해주세요.');
+        return;
+    }
 
-    // Authentication form listeners
+    const amount = parseFloat(document.getElementById('budgetAmount').value);
+    if (isNaN(amount) || amount <= 0) {
+        showMessage('오류', '유효한 금액을 입력해주세요.');
+        return;
+    }
+
+    const budget = {
+        userId: currentUser.uid,
+        category: finalCategory,
+        amount: amount
+    };
+
+    try {
+        const docId = `${currentUser.uid}_${finalCategory}`;
+        await setDoc(doc(db, 'budgets', docId), budget);
+        document.getElementById('addBudgetForm').reset();
+        bootstrap.Modal.getInstance(document.getElementById('addBudgetModal')).hide();
+        renderBudgetList();
+        checkBudgets();
+        showMessage('성공', '예산이 성공적으로 설정되었습니다.');
+    } catch (error) {
+        console.error('Error setting budget:', error);
+        showMessage('오류', '예산 설정에 실패했습니다.');
+    }
+}
+async function deleteBudget(budgetId) {
+    if (!confirm('정말로 이 예산을 삭제하시겠습니까?')) return;
+    try {
+        await deleteDoc(doc(db, 'budgets', budgetId));
+        renderBudgetList();
+        showMessage('성공', '예산이 성공적으로 삭제되었습니다.');
+    } catch (error) {
+        console.error('Error deleting budget:', error);
+        showMessage('오류', '예산 삭제에 실패했습니다.');
+    }
+}
+async function renderBudgetList() {
+    const budgetList = document.getElementById('budgetList');
+    if (!budgetList) return;
+    budgetList.innerHTML = ''; // Clear existing list
+
+    try {
+        const budgetsQuery = query(
+            collection(db, 'budgets'),
+            where('userId', '==', currentUser.uid)
+        );
+        const budgetsSnapshot = await getDocs(budgetsQuery);
+        const budgets = [];
+        budgetsSnapshot.forEach(doc => budgets.push({ id: doc.id, ...doc.data() }));
+
+        const now = new Date();
+        const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const expensesQuery = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', thisMonthKey),
+            where('type', '==', 'expense')
+        );
+        const expensesSnapshot = await getDocs(expensesQuery);
+        const monthlyExpenses = {};
+        expensesSnapshot.forEach(doc => {
+            const exp = doc.data();
+            monthlyExpenses[exp.category] = (monthlyExpenses[exp.category] || 0) + exp.amount;
+        });
+
+        if (budgets.length === 0) {
+            budgetList.innerHTML = '<tr><td colspan="4" class="text-center">설정된 예산이 없습니다.</td></tr>';
+            return;
+        }
+
+        budgets.forEach(budget => {
+            const spent = monthlyExpenses[budget.category] || 0;
+            const remaining = budget.amount - spent;
+            const progress = (spent / budget.amount) * 100;
+            const progressColor = progress > 100 ? 'bg-danger' : 'bg-primary';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${budget.category}</td>
+                <td>${formatCurrency(budget.amount)}</td>
+                <td>${formatCurrency(spent)}</td>
+                <td>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar ${progressColor}" role="progressbar" style="width: ${Math.min(100, progress)}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                            ${progress.toFixed(1)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteBudget('${budget.id}')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            `;
+            budgetList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error rendering budget list:', error);
+    }
+}
+async function checkBudgets() {
+    try {
+        const budgetsQuery = query(
+            collection(db, 'budgets'),
+            where('userId', '==', currentUser.uid)
+        );
+        const budgetsSnapshot = await getDocs(budgetsQuery);
+
+        const now = new Date();
+        const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const expensesQuery = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', thisMonthKey),
+            where('type', '==', 'expense')
+        );
+        const expensesSnapshot = await getDocs(expensesQuery);
+        const monthlyExpenses = {};
+        expensesSnapshot.forEach(doc => {
+            const exp = doc.data();
+            monthlyExpenses[exp.category] = (monthlyExpenses[exp.category] || 0) + exp.amount;
+        });
+
+        const exceededBudgets = [];
+        budgetsSnapshot.forEach(doc => {
+            const budget = doc.data();
+            const spent = monthlyExpenses[budget.category] || 0;
+            if (spent > budget.amount) {
+                exceededBudgets.push(budget);
+            }
+        });
+
+        const budgetAlert = document.getElementById('budget-alert');
+        if (exceededBudgets.length > 0) {
+            let message = '🚨 예산 초과 경고:';
+            exceededBudgets.forEach(budget => {
+                const spent = monthlyExpenses[budget.category] || 0;
+                message += `<br>- **${budget.category}**: ${formatCurrency(budget.amount)} 예산 중 ${formatCurrency(spent)} 지출`;
+            });
+            budgetAlert.innerHTML = message;
+            budgetAlert.style.display = 'block';
+        } else {
+            budgetAlert.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Error checking budgets:', error);
+    }
+}
+async function exportCSV() {
+    const expenses = await getFilteredExpenses();
+
+    if (expenses.length === 0) {
+        showMessage('오류', '내보낼 데이터가 없습니다.');
+        return;
+    }
+
+    const headers = ["날짜", "유형", "설명", "카테고리", "금액", "카드"];
+    const csvRows = [headers.join(',')];
+
+    expenses.forEach(expense => {
+        const row = [
+            `"${expense.date}"`,
+            `"${expense.type === 'income' ? '수입' : '지출'}"`,
+            `"${expense.description.replace(/"/g, '""')}"`,
+            `"${expense.category.replace(/"/g, '""')}"`,
+            expense.amount,
+            `"${expense.card}"`
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const bom = '\ufeff'; // UTF-8 BOM
+    const blob = new Blob([bom + csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'expenses.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showMessage('성공', '데이터가 CSV 파일로 성공적으로 내보내졌습니다.');
+}// Initialize the app
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up authentication
     document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
     document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
-    document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    document.getElementById('forgotPasswordLink').addEventListener('click', handlePasswordReset);
 
     // Toggle between login and signup forms
-    document.getElementById('signupLink').addEventListener('click', (e) => {
+    document.getElementById('signupLink').addEventListener('click', function(e) {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'none';
         document.getElementById('signup-form').style.display = 'block';
     });
-    document.getElementById('loginLink').addEventListener('click', (e) => {
+
+    document.getElementById('loginLink').addEventListener('click', function(e) {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'block';
         document.getElementById('signup-form').style.display = 'none';
     });
+
+    document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        handlePasswordReset();
+    });
+
+    // Google Sign-In button
+    document.getElementById('googleSignInBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        handleGoogleSignIn();
+    });
+
+    // Logout functionality
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+    }
+
+    // Set current date
+    const dateInput = document.getElementById('date');
+    const vizMonthInput = document.getElementById('vizMonth');
+    const exportMonthInput = document.getElementById('exportMonth');
+
+    if (dateInput) dateInput.value = getLocalDate();
+    if (vizMonthInput) vizMonthInput.value = getMonthKey(getLocalDate());
+    if (exportMonthInput) exportMonthInput.value = getMonthKey(getLocalDate());
+
+    // Setup navigation
+    setupNavigation();
+
+    // Show loading spinner initially
+    loadingSpinner.style.display = 'flex';
+
+    const themeToggleButton = document.getElementById('theme-toggle');
+
+    // Check for saved theme preference or system preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.body.classList.add('dark-mode');
+        if (themeToggleButton) {
+            themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i>';
+        }
+    } else {
+        if (themeToggleButton) {
+            themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i>';
+        }
+    }
+
+    if (themeToggleButton) {
+        themeToggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i>';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i>';
+            }
+        });
+    }
 });
+
+// Global function exports for onclick handlers
+window.handleGoogleSignIn = handleGoogleSignIn;
+window.openEditModal = openEditModal;
+window.saveEdit = saveEdit;
+window.deleteExpense = deleteExpense;
+window.exportMonth = exportMonth;
+window.deleteBudget = deleteBudget;
+window.setBudget = setBudget;
+window.deleteBudget = deleteBudget;
