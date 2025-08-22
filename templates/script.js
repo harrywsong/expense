@@ -805,6 +805,14 @@ async function populateFilterCategories() {
     if (!select) return;
 
     try {
+        // Define the fixed categories you want to include
+        const fixedCategories = new Set([
+            '그로서리',
+            '외식',
+            '주유+주차',
+            '고정비용'
+        ]);
+
         const q = query(
             collection(db, 'expenses'),
             where('userId', '==', currentUser.uid),
@@ -812,13 +820,16 @@ async function populateFilterCategories() {
         );
         const querySnapshot = await getDocs(q);
 
-        const categories = new Set();
+        // Add categories from Firestore to the set
         querySnapshot.forEach(doc => {
-            categories.add(doc.data().category);
+            fixedCategories.add(doc.data().category);
         });
 
+        // Clear existing options
         select.innerHTML = '<option value="">전체</option>';
-        Array.from(categories).sort().forEach(cat => {
+
+        // Convert the set to an array, sort it, and populate the dropdown
+        Array.from(fixedCategories).sort().forEach(cat => {
             const option = document.createElement('option');
             option.value = cat;
             option.textContent = cat;
@@ -828,6 +839,7 @@ async function populateFilterCategories() {
         console.error('Error populating categories:', error);
     }
 }
+
 
 async function showMonthlyExpenses(monthKey = getMonthKey(getLocalDate())) {
     const tableBody = document.getElementById('monthlyTableBody');
@@ -1258,11 +1270,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (savedTheme === 'dark' || (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.body.classList.add('dark-mode');
         if (themeToggleButton) {
-            themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i> Light Mode';
+            themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i>';
         }
     } else {
         if (themeToggleButton) {
-            themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i> Dark Mode';
+            themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i>';
         }
     }
 
@@ -1271,10 +1283,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.toggle('dark-mode');
             if (document.body.classList.contains('dark-mode')) {
                 localStorage.setItem('theme', 'dark');
-                themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i> Light Mode';
+                themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i>';
             } else {
                 localStorage.setItem('theme', 'light');
-                themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i> Dark Mode';
+                themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i>';
             }
         });
     }
