@@ -1245,7 +1245,6 @@ async function exportCSV() {
 
     showMessage('성공', '데이터가 CSV 파일로 성공적으로 내보내졌습니다.');
 }
-
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
     // Set up authentication
