@@ -315,25 +315,35 @@ html, body {
     color: var(--text-color);
 }
 
-.table-striped tbody tr:nth-of-type(odd) {
+/*
+    Table Fix: Applying background color to tbody and table cells directly
+*/
+.table {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+.table thead, .table tbody {
+    background-color: var(--card-bg);
+}
+
+.table th, .table td {
+    border-top: 1px solid var(--border-color);
+    color: var(--text-color);
+    background-color: var(--card-bg);
+}
+
+.table-striped tbody tr:nth-of-type(odd) td {
     background-color: var(--table-stripe);
 }
 
-.table-hover tbody tr:hover {
+.table-hover tbody tr:hover td {
     background-color: var(--table-hover);
-}
-
-.table {
-    color: var(--text-color);
 }
 
 .table thead th {
     border-bottom: 2px solid var(--border-color);
-}
-
-.table td, .table th {
-    border-top: 1px solid var(--border-color);
-    color: var(--text-color);
+    background-color: var(--card-bg);
 }
 
 .form-control, .form-select {
