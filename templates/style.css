@@ -433,3 +433,7 @@ body.dark-mode .sidebar {
         transform: translateX(0);
     }
 }
+
+.sidebar {
+    background-color: var(--sidebar-bg);
+}
