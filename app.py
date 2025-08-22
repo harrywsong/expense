@@ -15,4 +15,4 @@ def serve_index():
 
 if __name__ == '__main__':
     # This part is for local testing. In production, a different server handles this.
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=9999, debug=True)
