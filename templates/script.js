@@ -1235,7 +1235,8 @@ async function exportCSV() {
     });
 
     const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const bom = '\ufeff'; // UTF-8 BOM
+    const blob = new Blob([bom + csvString], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
@@ -1246,8 +1247,7 @@ async function exportCSV() {
     document.body.removeChild(link);
 
     showMessage('성공', '데이터가 CSV 파일로 성공적으로 내보내졌습니다.');
-}
-// Initialize the app
+}// Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
     // Set up authentication
     document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
