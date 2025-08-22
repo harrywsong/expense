@@ -635,7 +635,7 @@ async function addExpense(e) {
         renderDashboard();
         refreshTable(); // This line updates "All Transactions"
         showMonthlyExpenses(); // This line updates "Monthly Breakdown"
-        showMessage('Success', 'Item successfully added.');
+        showMessage('성공', '항목이 성공적으로 추가되었습니다.');
     } catch (error) {
         console.error('Error adding expense:', error);
         showMessage('Error', 'Failed to add item.');
@@ -841,7 +841,7 @@ async function showMonthlyExpenses(monthKey = getMonthKey(getLocalDate())) {
             collection(db, 'expenses'),
             where('userId', '==', currentUser.uid),
             where('month', '==', monthKey),
-            orderBy('date', 'asc')
+            orderBy('date', 'desc')
         );
         const querySnapshot = await getDocs(q);
 
