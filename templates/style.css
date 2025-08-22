@@ -246,6 +246,8 @@ body {
     margin-left: var(--sidebar-width);
     padding: 2rem;
     flex-grow: 1;
+    background-color: var(--background-color);
+    transition: background-color 0.3s;
 }
 
 .content-section {
@@ -262,7 +264,7 @@ body {
     align-items: center;
     padding: 0.75rem 1rem;
     margin-bottom: 0.25rem;
-    color: var(--text-color);
+    color: var(--text-color) !important;
     text-decoration: none;
     border-radius: 8px;
     transition: background-color 0.2s, color 0.2s;
@@ -270,7 +272,7 @@ body {
 
 .sidebar-nav .nav-link:hover {
     background-color: var(--background-color);
-    color: var(--primary-color);
+    color: var(--primary-color) !important;
 }
 
 .sidebar-nav .nav-link.active {
@@ -299,8 +301,8 @@ body {
 }
 
 .btn-outline-primary {
-    color: var(--primary-color);
-    border-color: var(--primary-color);
+    color: var(--text-color);
+    border-color: var(--border-color);
     transition: color 0.2s, border-color 0.2s;
 }
 
