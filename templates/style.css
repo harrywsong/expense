@@ -66,7 +66,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(var(--background-color), 0.9);
+    background-color: var(--background-color);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -106,7 +106,7 @@ body {
     text-align: center;
     padding: 2.5rem 2rem 1.5rem;
     background: var(--primary-color);
-    color: white; /* This color is static and should remain white against the primary color background */
+    color: white;
 }
 
 .logo {
@@ -125,14 +125,14 @@ body {
     font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
-    color: white; /* Ensure title is white on colored background */
+    color: white;
 }
 
 .app-subtitle {
     font-size: 0.9rem;
     opacity: 0.9;
     margin-bottom: 0;
-    color: white; /* Ensure subtitle is white on colored background */
+    color: white;
 }
 
 .login-body {
@@ -280,6 +280,7 @@ html, body {
     font-size: 1.2rem;
     color: var(--subtle-text);
     margin-right: 12px;
+    transition: color var(--transition-speed);
 }
 
 .sidebar-nav .nav-link.active i {
@@ -311,6 +312,7 @@ html, body {
 
 .card-title {
     font-weight: 600;
+    color: var(--text-color);
 }
 
 .table-striped tbody tr:nth-of-type(odd) {
@@ -331,17 +333,25 @@ html, body {
 
 .table td, .table th {
     border-top: 1px solid var(--border-color);
-}
-
-.form-control {
-    border-color: var(--input-border);
-    background-color: var(--input-bg);
     color: var(--text-color);
 }
 
-.form-control:focus {
+.form-control, .form-select {
+    border-color: var(--input-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.form-control::placeholder {
+    color: var(--subtle-text);
+}
+
+.form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.25rem rgba(var(--primary-color), 0.25);
+    background-color: var(--input-bg);
+    color: var(--text-color);
 }
 
 .btn-primary {
