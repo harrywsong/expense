@@ -448,9 +448,9 @@ function getLocalDate() {
 }
 
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('ko-KR', {
+    return new Intl.NumberFormat('en-CA', {
         style: 'currency',
-        currency: 'KRW'
+        currency: 'CAD'
     }).format(amount);
 }
 
