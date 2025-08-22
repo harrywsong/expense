@@ -340,6 +340,20 @@ function handleEditCategoryChange() {
     }
 }
 
+// Handle budget custom category visibility
+function handleBudgetCategoryChange() {
+    const categorySelect = document.getElementById('budgetCategory');
+    const customCategoryGroup = document.getElementById('budgetCustomCategoryGroup');
+    if (categorySelect.value === '기타') {
+        customCategoryGroup.style.display = 'block';
+        document.getElementById('budgetCustomCategory').required = true;
+    } else {
+        customCategoryGroup.style.display = 'none';
+        document.getElementById('budgetCustomCategory').required = false;
+        document.getElementById('budgetCustomCategory').value = '';
+    }
+}
+
 // Get final category value (handles custom category logic)
 function getFinalCategory() {
     const categorySelect = document.getElementById('category');
@@ -435,6 +449,10 @@ function setupNavigation() {
 
     // Budget controls
     document.getElementById('addBudgetBtn').addEventListener('click', setBudget);
+
+    // Budget controls
+    document.getElementById('addBudgetBtn').addEventListener('click', setBudget);
+    document.getElementById('budgetCategory').addEventListener('change', handleBudgetCategoryChange); // Add this line
 }
 
 // Utility functions
@@ -588,11 +606,12 @@ function plotDashboardChart(data) {
 
 // Data management functions
 // Data management functions
+// Data management functions
 async function addExpense(e) {
     e.preventDefault();
     const finalCategory = getFinalCategory();
     if (!finalCategory) {
-        showMessage('오류', '카테고리를 입력해주세요.');
+        showMessage('Error', 'Please enter a category.');
         return;
     }
     const newExpense = {
@@ -612,15 +631,14 @@ async function addExpense(e) {
         document.getElementById('date').value = getLocalDate();
         document.getElementById('customCategoryGroup').style.display = 'none';
         renderDashboard();
-        refreshTable(); // Add this line
-        showMonthlyExpenses(); // Add this line
-        showMessage('성공', '항목이 성공적으로 추가되었습니다.');
+        refreshTable();
+        showMonthlyExpenses();
+        showMessage('Success', 'Item successfully added.');
     } catch (error) {
         console.error('Error adding expense:', error);
-        showMessage('오류', '항목 추가에 실패했습니다.');
+        showMessage('Error', 'Failed to add item.');
     }
 }
-
 async function getFilteredExpenses() {
     const fromDate = document.getElementById('fromDate').value;
     const toDate = document.getElementById('toDate').value;
@@ -1028,11 +1046,21 @@ async function exportMonth() {
 }
 
 async function setBudget() {
-    const category = document.getElementById('budgetCategory').value.trim();
-    const amount = parseInt(document.getElementById('budgetAmount').value);
+    let category = document.getElementById('budgetCategory').value;
+    const amount = parseFloat(document.getElementById('budgetAmount').value);
+
+    // Handle custom category
+    if (category === '기타') {
+        const customCategory = document.getElementById('budgetCustomCategory').value.trim();
+        if (!customCategory) {
+            showMessage('Error', 'Please enter a custom category.');
+            return;
+        }
+        category = customCategory;
+    }
 
     if (!category || isNaN(amount) || amount <= 0) {
-        showMessage('오류', '유효한 카테고리와 금액을 입력하세요.');
+        showMessage('Error', 'Please enter a valid category and amount.');
         return;
     }
 

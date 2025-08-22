@@ -417,9 +417,13 @@
                     <option value="기타">기타</option>
                 </select>
             </div>
+            <div class="mb-3" id="budgetCustomCategoryGroup" style="display: none;">
+                <label for="budgetCustomCategory" class="form-label">카테고리 이름</label>
+                <input type="text" class="form-control" id="budgetCustomCategory" placeholder="카테고리 이름을 입력하세요">
+            </div>
             <div class="mb-3">
                 <label for="budgetAmount" class="form-label">예산 금액</label>
-                <input type="number" step="0.01" class="form-control" id="budgetAmount" required>
+                <input type="number" step="1000" class="form-control" id="budgetAmount" required>
             </div>
             <button type="button" class="btn btn-primary" id="addBudgetBtn">예산 설정</button>
         </form>
