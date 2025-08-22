@@ -9,45 +9,151 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+    <!-- Loading Spinner -->
     <div id="loading-spinner" class="loading-overlay">
         <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+            <span class="visually-hidden">로딩중...</span>
         </div>
     </div>
 
-    <div id="login-page" class="container mt-5" style="display: none;">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
-                <div class="card shadow-lg">
-                    <div class="card-body p-4">
-                        <h2 class="card-title text-center mb-4">가계부</h2>
-                        <form id="loginForm">
-                            <div class="mb-3">
-                                <label for="emailInput" class="form-label">이메일</label>
-                                <input type="email" class="form-control" id="emailInput" required>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container" style="display: none;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="login-card">
+                        <div class="login-header">
+                            <div class="logo">
+                                <i class="fas fa-wallet"></i>
                             </div>
-                            <div class="mb-3">
-                                <label for="passwordInput" class="form-label">비밀번호</label>
-                                <input type="password" class="form-control" id="passwordInput" required>
+                            <h1 class="app-title">가계부</h1>
+                            <p class="app-subtitle">개인 재정 관리 시스템</p>
+                        </div>
+
+                        <div class="login-body">
+                            <!-- Google Sign-In Button -->
+                            <div id="g_id_onload"
+                                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                                 data-context="signin"
+                                 data-ux_mode="popup"
+                                 data-callback="handleGoogleSignIn">
                             </div>
-                            <div class="d-grid gap-2">
-                                <button type="button" id="emailSignInBtn" class="btn btn-primary btn-block">
-                                    <i class="fas fa-sign-in-alt me-2"></i> 이메일로 로그인
-                                </button>
-                                <button type="button" id="demoBtn" class="btn btn-outline-secondary btn-block">
-                                    <i class="fas fa-user me-2"></i> 데모 사용
-                                </button>
+                            <div class="g_id_signin"
+                                 data-type="standard"
+                                 data-size="large"
+                                 data-theme="outline"
+                                 data-text="signin_with"
+                                 data-shape="rectangular"
+                                 data-logo_alignment="left"
+                                 data-width="100%">
                             </div>
-                        </form>
+
+                            <div class="divider">
+                                <span>또는</span>
+                            </div>
+
+                            <!-- Email/Password Form -->
+                            <form id="loginForm">
+                                <div class="form-group">
+                                    <label for="emailInput" class="form-label">이메일</label>
+                                    <div class="input-group">
+                                        <span class="input-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="emailInput" required placeholder="이메일을 입력하세요">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="passwordInput" class="form-label">비밀번호</label>
+                                    <div class="input-group">
+                                        <span class="input-icon">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" class="form-control" id="passwordInput" required placeholder="비밀번호를 입력하세요">
+                                    </div>
+                                </div>
+
+                                <div class="login-actions">
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-sign-in-alt me-2"></i> 로그인
+                                    </button>
+
+                                    <div class="auth-links">
+                                        <a href="#" id="signupLink">계정이 없으신가요? 회원가입</a>
+                                        <a href="#" id="forgotPasswordLink">비밀번호를 잊으셨나요?</a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Sign Up Form (initially hidden) -->
+                    <div class="login-card" id="signup-form" style="display: none;">
+                        <div class="login-header">
+                            <div class="logo">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <h1 class="app-title">회원가입</h1>
+                            <p class="app-subtitle">새 계정을 만드세요</p>
+                        </div>
+
+                        <div class="login-body">
+                            <form id="signupForm">
+                                <div class="form-group">
+                                    <label for="signupEmail" class="form-label">이메일</label>
+                                    <div class="input-group">
+                                        <span class="input-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="signupEmail" required placeholder="이메일을 입력하세요">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="signupPassword" class="form-label">비밀번호</label>
+                                    <div class="input-group">
+                                        <span class="input-icon">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" class="form-control" id="signupPassword" required placeholder="비밀번호를 입력하세요" minlength="6">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                                    <div class="input-group">
+                                        <span class="input-icon">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                        <input type="password" class="form-control" id="confirmPassword" required placeholder="비밀번호를 다시 입력하세요" minlength="6">
+                                    </div>
+                                </div>
+
+                                <div class="login-actions">
+                                    <button type="submit" class="btn btn-primary btn-block">
+                                        <i class="fas fa-user-plus me-2"></i> 회원가입
+                                    </button>
+
+                                    <div class="auth-links">
+                                        <a href="#" id="loginLink">이미 계정이 있으신가요? 로그인</a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- App Container (hidden initially) -->
     <div id="app-container" class="d-flex" style="display: none;">
         <div class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-light">
             <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
@@ -110,9 +216,9 @@
                 <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle me-2 fs-5"></i>
                     <div>
-                        <small class="fw-bold" id="user-email">데모 사용자</small>
+                        <small class="fw-bold" id="user-email">사용자</small>
                         <br>
-                        <small class="text-muted" id="user-id">demo-user</small>
+                        <small class="text-muted" id="user-id">user-id</small>
                     </div>
                 </a>
                 <ul class="dropdown-menu text-small shadow">
@@ -438,6 +544,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="/script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
