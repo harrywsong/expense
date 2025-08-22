@@ -1,5 +1,5 @@
 // Korean Personal Finance App (가계부) - Firebase Integration
-import { auth, db, googleProvider } from './firebase-config.js';
+import { auth, db, googleProvider } from './firebase_config.js';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
