@@ -70,18 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const signInBtn = document.getElementById('signInBtn');
-    signInBtn.addEventListener('click', async () => {
-        loadingSpinner.style.display = 'flex';
-        try {
-            await signInAnonymously(auth);
-        } catch (error) {
-            console.error("Anonymous authentication failed:", error);
-            loadingSpinner.style.display = 'none';
-            showMessage('오류', '로그인 중 오류가 발생했습니다. 나중에 다시 시도해주세요.');
-        }
-    });
-
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await signOut(auth);
     });
