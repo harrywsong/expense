@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>가계부</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-ieoQoR9xO0j0y5R1n4xI1mY3+1W1D6zYfJz2vF6zR6Vj+w38+6j4t858+5/r9878" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-    <div id="loading-spinner" class="d-flex justify-content-center align-items-center vh-100">
+    <div id="loading-spinner" class="loading-overlay">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
@@ -37,13 +37,9 @@
                                 <button type="button" id="emailSignInBtn" class="btn btn-primary btn-block">
                                     <i class="fas fa-sign-in-alt me-2"></i> 이메일로 로그인
                                 </button>
-                                <button type="button" id="googleSignInBtn" class="btn btn-outline-secondary btn-block">
-                                    <i class="fab fa-google me-2"></i> Google로 로그인
+                                <button type="button" id="demoBtn" class="btn btn-outline-secondary btn-block">
+                                    <i class="fas fa-user me-2"></i> 데모 사용
                                 </button>
-                            </div>
-                            <hr class="my-4">
-                            <div class="text-center">
-                                <a href="#" id="createAccountLink">계정 만들기</a>
                             </div>
                         </form>
                     </div>
@@ -53,7 +49,7 @@
     </div>
 
     <div id="app-container" class="d-flex" style="display: none;">
-        <div class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-light" style="width: 280px;">
+        <div class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-light">
             <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
                 <i class="fas fa-wallet fs-4 me-2"></i>
                 <span class="fs-4 fw-bold">가계부</span>
@@ -61,7 +57,7 @@
             <hr>
             <ul class="nav nav-pills flex-column mb-auto sidebar-nav">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active" data-target="dashboard" aria-current="page">
+                    <a href="#" class="nav-link active" data-target="dashboard">
                         <i class="fas fa-tachometer-alt me-2"></i>
                         대시보드
                     </a>
@@ -111,15 +107,15 @@
             </ul>
             <hr>
             <div class="dropdown">
-                <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown" aria-expanded="false">
+                <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle me-2 fs-5"></i>
                     <div>
-                        <small class="fw-bold" id="user-email">사용자</small>
+                        <small class="fw-bold" id="user-email">데모 사용자</small>
                         <br>
-                        <small class="text-muted" id="user-id">ID</small>
+                        <small class="text-muted" id="user-id">demo-user</small>
                     </div>
                 </a>
-                <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2">
+                <ul class="dropdown-menu text-small shadow">
                     <li><a class="dropdown-item" href="#" id="logoutBtn">로그아웃</a></li>
                 </ul>
             </div>
@@ -133,7 +129,7 @@
                         <div class="card text-white bg-success">
                             <div class="card-body">
                                 <h5 class="card-title">이번 달 수입</h5>
-                                <p class="card-text fs-3" id="dashboard-income">$0.00</p>
+                                <p class="card-text fs-3" id="dashboard-income">₩0</p>
                             </div>
                         </div>
                     </div>
@@ -141,7 +137,7 @@
                         <div class="card text-white bg-danger">
                             <div class="card-body">
                                 <h5 class="card-title">이번 달 지출</h5>
-                                <p class="card-text fs-3" id="dashboard-expense">$0.00</p>
+                                <p class="card-text fs-3" id="dashboard-expense">₩0</p>
                             </div>
                         </div>
                     </div>
@@ -149,7 +145,7 @@
                         <div class="card text-white bg-info">
                             <div class="card-body">
                                 <h5 class="card-title">지난 달 지출</h5>
-                                <p class="card-text fs-3" id="dashboard-prev-expense">$0.00</p>
+                                <p class="card-text fs-3" id="dashboard-prev-expense">₩0</p>
                             </div>
                         </div>
                     </div>
@@ -157,7 +153,7 @@
                         <div class="card text-white bg-primary">
                             <div class="card-body">
                                 <h5 class="card-title">순수입</h5>
-                                <p class="card-text fs-3" id="dashboard-net-income">$0.00</p>
+                                <p class="card-text fs-3" id="dashboard-net-income">₩0</p>
                             </div>
                         </div>
                     </div>
@@ -185,7 +181,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="date" class="form-label">날짜</label>
-                        <input type="date" class="form-control" id="date" value="">
+                        <input type="date" class="form-control" id="date">
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">내용</label>
@@ -197,11 +193,11 @@
                     </div>
                     <div class="mb-3">
                         <label for="amount" class="form-label">금액</label>
-                        <input type="number" step="0.01" class="form-control" id="amount" required>
+                        <input type="number" step="100" class="form-control" id="amount" required>
                     </div>
                     <div class="mb-3">
                         <label for="card" class="form-label">결제수단</label>
-                        <input type="text" class="form-control" id="card">
+                        <input type="text" class="form-control" id="card" value="현금">
                     </div>
                     <button type="submit" class="btn btn-primary">추가</button>
                 </form>
@@ -231,18 +227,6 @@
                                 <label for="descSearch" class="form-label">내용 검색</label>
                                 <input type="text" class="form-control" id="descSearch">
                             </div>
-                            <div class="col-md-6 col-lg-3">
-                                <label for="minAmount" class="form-label">최소 금액</label>
-                                <input type="number" step="0.01" class="form-control" id="minAmount">
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <label for="maxAmount" class="form-label">최대 금액</label>
-                                <input type="number" step="0.01" class="form-control" id="maxAmount">
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <label for="filterCard" class="form-label">결제수단</label>
-                                <input type="text" class="form-control" id="filterCard">
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -259,16 +243,15 @@
                                 <th></th>
                             </tr>
                         </thead>
-                        <tbody>
-                            </tbody>
+                        <tbody></tbody>
                         <tfoot>
                             <tr>
                                 <td colspan="4" class="text-end fw-bold">총 지출:</td>
-                                <td colspan="3" class="fw-bold text-danger" id="filteredTotal">$0.00</td>
+                                <td colspan="3" class="fw-bold text-danger" id="filteredTotal">₩0</td>
                             </tr>
                             <tr>
                                 <td colspan="4" class="text-end fw-bold">총 수입:</td>
-                                <td colspan="3" class="fw-bold text-success" id="filteredIncomeTotal">$0.00</td>
+                                <td colspan="3" class="fw-bold text-success" id="filteredIncomeTotal">₩0</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -294,8 +277,7 @@
                                 <th>결제수단</th>
                             </tr>
                         </thead>
-                        <tbody id="monthlyTableBody">
-                            </tbody>
+                        <tbody id="monthlyTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -312,7 +294,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="budgetAmount" class="form-label">예산 금액</label>
-                                <input type="number" step="0.01" class="form-control" id="budgetAmount" required>
+                                <input type="number" step="1000" class="form-control" id="budgetAmount" required>
                             </div>
                             <button type="button" class="btn btn-primary" id="addBudgetBtn">예산 설정</button>
                         </form>
@@ -337,7 +319,6 @@
                     <select id="vizType" class="form-select" style="width: auto;">
                         <option value="pie">파이 차트</option>
                         <option value="bar">막대 그래프</option>
-                        <option value="line">선 그래프</option>
                     </select>
                 </div>
                 <div class="card">
@@ -393,12 +374,13 @@
         </div>
     </div>
 
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">항목 수정</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">항목 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="edit-id">
@@ -423,7 +405,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit-amount" class="form-label">금액</label>
-                        <input type="number" step="0.01" class="form-control" id="edit-amount">
+                        <input type="number" step="100" class="form-control" id="edit-amount">
                     </div>
                     <div class="mb-3">
                         <label for="edit-card" class="form-label">결제수단</label>
@@ -438,12 +420,13 @@
         </div>
     </div>
 
-    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <!-- Message Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="messageModalTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="messageModalBody"></div>
                 <div class="modal-footer">
@@ -453,9 +436,8 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script type="module" src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="/script.js"></script>
 </body>
 </html>
