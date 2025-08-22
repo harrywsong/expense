@@ -74,28 +74,40 @@ document.addEventListener('DOMContentLoaded', () => {
         await signOut(auth);
     });
 
-// Google Sign-In
-const googleSignInBtn = document.getElementById('googleSignInBtn');
-googleSignInBtn.addEventListener('click', async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-        await signInWithPopup(auth, provider);
-    } catch (error) {
-        console.error("Google Sign-In failed:", error);
+    // --- Added Functions for Sign-In ---
+    async function signInWithGoogle() {
+        const provider = new GoogleAuthProvider();
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Google Sign-In failed:", error);
+            // Optional: show a user-friendly error message
+            showMessage('Sign-In Failed', 'Could not sign in with Google. Please try again.');
+        }
     }
-});
 
-// Email/Password Sign-In
-const emailSignInBtn = document.getElementById('emailSignInBtn');
-emailSignInBtn.addEventListener('click', async () => {
-    const email = document.getElementById('emailInput').value;
-    const password = document.getElementById('passwordInput').value;
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-        console.error("Email/Password Sign-In failed:", error);
+    async function signInWithEmail() {
+        const email = document.getElementById('emailInput').value;
+        const password = document.getElementById('passwordInput').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Email/Password Sign-In failed:", error);
+            // Optional: show a user-friendly error message
+            showMessage('Sign-In Failed', 'Incorrect email or password. Please try again.');
+        }
     }
-});
+
+    // --- Event Listeners for Sign-In ---
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
+    if (googleSignInBtn) {
+        googleSignInBtn.addEventListener('click', signInWithGoogle);
+    }
+
+    const emailSignInBtn = document.getElementById('emailSignInBtn');
+    if (emailSignInBtn) {
+        emailSignInBtn.addEventListener('click', signInWithEmail);
+    }
 
     // --- Navigation Logic ---
     function setupNavigation() {
