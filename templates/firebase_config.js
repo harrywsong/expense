@@ -1,4 +1,4 @@
-// firebase-config.js
+// Firebase configuration
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -17,20 +17,15 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const analytics = getAnalytics(app);
 
-// Configure Google Auth Provider
-const googleProvider = new GoogleAuthProvider();
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
+// Initialize Firebase Authentication and get a reference to the service
+export const auth = getAuth(app);
 
-// Export for use in other modules
-export { 
-    app, 
-    auth, 
-    db, 
-    analytics, 
-    googleProvider 
-};
+// Initialize Cloud Firestore and get a reference to the service
+export const db = getFirestore(app);
+
+// Initialize Google Auth Provider
+export const googleProvider = new GoogleAuthProvider();
+
+// Initialize Analytics (optional)
+export const analytics = getAnalytics(app);
