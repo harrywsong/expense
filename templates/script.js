@@ -122,6 +122,7 @@ async function handleGoogleSignIn() {
         loadingSpinner.style.display = 'none';
     }
 }
+
 async function handlePasswordReset() {
     const email = document.getElementById('emailInput').value;
     if (!email) {
@@ -166,9 +167,9 @@ async function loadDemoDataForUser(uid) {
             type: 'expense',
             date: `${currentMonth}-01`,
             description: '마트 장보기',
-            category: '식비',
+            category: '그로서리',
             amount: 50000,
-            card: '체크카드',
+            card: 'BMO Debit',
             month: currentMonth,
             timestamp: new Date().toISOString()
         },
@@ -177,7 +178,7 @@ async function loadDemoDataForUser(uid) {
             type: 'expense',
             date: `${currentMonth}-03`,
             description: '카페',
-            category: '식비',
+            category: '외식',
             amount: 8000,
             card: '현금',
             month: currentMonth,
@@ -190,7 +191,7 @@ async function loadDemoDataForUser(uid) {
             description: '월급',
             category: '급여',
             amount: 3000000,
-            card: '계좌이체',
+            card: 'TD',
             month: currentMonth,
             timestamp: new Date().toISOString()
         },
@@ -198,10 +199,10 @@ async function loadDemoDataForUser(uid) {
             userId: uid,
             type: 'expense',
             date: `${currentMonth}-05`,
-            description: '지하철',
-            category: '교통',
-            amount: 2500,
-            card: '교통카드',
+            description: '주유',
+            category: '주유+주차',
+            amount: 60000,
+            card: 'BMO WJ',
             month: currentMonth,
             timestamp: new Date().toISOString()
         },
@@ -209,10 +210,10 @@ async function loadDemoDataForUser(uid) {
             userId: uid,
             type: 'expense',
             date: `${currentMonth}-07`,
-            description: '영화',
-            category: '문화',
-            amount: 15000,
-            card: '신용카드',
+            description: '휴대폰 요금',
+            category: '고정비용',
+            amount: 45000,
+            card: 'BMO JH',
             month: currentMonth,
             timestamp: new Date().toISOString()
         }
@@ -225,9 +226,10 @@ async function loadDemoDataForUser(uid) {
 
     // Add demo budgets
     const demoBudgets = [
-        { userId: uid, category: '식비', amount: 100000 },
-        { userId: uid, category: '교통', amount: 50000 },
-        { userId: uid, category: '문화', amount: 30000 }
+        { userId: uid, category: '그로서리', amount: 150000 },
+        { userId: uid, category: '외식', amount: 100000 },
+        { userId: uid, category: '주유+주차', amount: 120000 },
+        { userId: uid, category: '고정비용', amount: 200000 }
     ];
 
     for (const budget of demoBudgets) {
@@ -308,6 +310,54 @@ async function loadUserData() {
     }
 }
 
+// Handle custom category visibility
+function handleCategoryChange() {
+    const categorySelect = document.getElementById('category');
+    const customCategoryGroup = document.getElementById('customCategoryGroup');
+
+    if (categorySelect.value === '기타') {
+        customCategoryGroup.style.display = 'block';
+        document.getElementById('customCategory').required = true;
+    } else {
+        customCategoryGroup.style.display = 'none';
+        document.getElementById('customCategory').required = false;
+        document.getElementById('customCategory').value = '';
+    }
+}
+
+// Handle edit modal category change
+function handleEditCategoryChange() {
+    const categorySelect = document.getElementById('edit-category');
+    const customCategoryGroup = document.getElementById('editCustomCategoryGroup');
+
+    if (categorySelect.value === '기타') {
+        customCategoryGroup.style.display = 'block';
+        document.getElementById('editCustomCategory').required = true;
+    } else {
+        customCategoryGroup.style.display = 'none';
+        document.getElementById('editCustomCategory').required = false;
+        document.getElementById('editCustomCategory').value = '';
+    }
+}
+
+// Get final category value (handles custom category logic)
+function getFinalCategory() {
+    const categorySelect = document.getElementById('category');
+    if (categorySelect.value === '기타') {
+        return document.getElementById('customCategory').value.trim();
+    }
+    return categorySelect.value;
+}
+
+// Get final category value for edit modal
+function getFinalEditCategory() {
+    const categorySelect = document.getElementById('edit-category');
+    if (categorySelect.value === '기타') {
+        return document.getElementById('editCustomCategory').value.trim();
+    }
+    return categorySelect.value;
+}
+
 // Navigation setup
 function setupNavigation() {
     const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
@@ -354,6 +404,10 @@ function setupNavigation() {
     document.getElementById('filterCategory').addEventListener('change', refreshTable);
     document.getElementById('descSearch').addEventListener('input', refreshTable);
 
+    // Category change handlers
+    document.getElementById('category').addEventListener('change', handleCategoryChange);
+    document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
+
     // Monthly navigation
     document.getElementById('prevMonthBtn').addEventListener('click', () => {
         const currentDisplay = document.getElementById('currentMonthDisplay').textContent;
@@ -394,9 +448,9 @@ function getLocalDate() {
 }
 
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-CA', {
+    return new Intl.NumberFormat('ko-KR', {
         style: 'currency',
-        currency: 'CAD'
+        currency: 'KRW'
     }).format(amount);
 }
 
@@ -536,14 +590,20 @@ function plotDashboardChart(data) {
 async function addExpense(e) {
     e.preventDefault();
 
+    const finalCategory = getFinalCategory();
+    if (!finalCategory) {
+        showMessage('오류', '카테고리를 입력해주세요.');
+        return;
+    }
+
     const newExpense = {
         userId: currentUser.uid,
         type: document.getElementById('type').value,
         date: document.getElementById('date').value || getLocalDate(),
         description: document.getElementById('description').value,
-        category: document.getElementById('category').value,
+        category: finalCategory,
         amount: parseInt(document.getElementById('amount').value),
-        card: document.getElementById('card').value || '현금',
+        card: document.getElementById('card').value,
         month: getMonthKey(document.getElementById('date').value || getLocalDate()),
         timestamp: new Date().toISOString()
     };
@@ -553,6 +613,7 @@ async function addExpense(e) {
 
         document.getElementById('addForm').reset();
         document.getElementById('date').value = getLocalDate();
+        document.getElementById('customCategoryGroup').style.display = 'none';
 
         renderDashboard();
         refreshTable();
@@ -650,7 +711,20 @@ async function openEditModal(expenseId) {
         document.getElementById('edit-type').value = expenseToEdit.type;
         document.getElementById('edit-date').value = expenseToEdit.date;
         document.getElementById('edit-description').value = expenseToEdit.description;
-        document.getElementById('edit-category').value = expenseToEdit.category;
+
+        // Handle category display in edit modal
+        const predefinedCategories = ['그로서리', '외식', '주유+주차', '고정비용'];
+        const categorySelect = document.getElementById('edit-category');
+
+        if (predefinedCategories.includes(expenseToEdit.category)) {
+            categorySelect.value = expenseToEdit.category;
+            document.getElementById('editCustomCategoryGroup').style.display = 'none';
+        } else {
+            categorySelect.value = '기타';
+            document.getElementById('editCustomCategoryGroup').style.display = 'block';
+            document.getElementById('editCustomCategory').value = expenseToEdit.category;
+        }
+
         document.getElementById('edit-amount').value = expenseToEdit.amount;
         document.getElementById('edit-card').value = expenseToEdit.card;
 
@@ -663,11 +737,18 @@ async function openEditModal(expenseId) {
 
 async function saveEdit() {
     const expenseId = document.getElementById('edit-id').value;
+    const finalCategory = getFinalEditCategory();
+
+    if (!finalCategory) {
+        showMessage('오류', '카테고리를 입력해주세요.');
+        return;
+    }
+
     const updatedExpense = {
         type: document.getElementById('edit-type').value,
         date: document.getElementById('edit-date').value,
         description: document.getElementById('edit-description').value,
-        category: document.getElementById('edit-category').value,
+        category: finalCategory,
         amount: parseInt(document.getElementById('edit-amount').value),
         card: document.getElementById('edit-card').value,
         month: getMonthKey(document.getElementById('edit-date').value)

@@ -288,7 +288,18 @@
                     </div>
                     <div class="mb-3">
                         <label for="category" class="form-label">카테고리</label>
-                        <input type="text" class="form-control" id="category" required>
+                        <select class="form-select" id="category" required>
+                            <option value="">카테고리 선택</option>
+                            <option value="그로서리">그로서리</option>
+                            <option value="외식">외식</option>
+                            <option value="주유+주차">주유+주차</option>
+                            <option value="고정비용">고정비용</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="customCategoryGroup" style="display: none;">
+                        <label for="customCategory" class="form-label">카테고리 이름</label>
+                        <input type="text" class="form-control" id="customCategory" placeholder="카테고리 이름을 입력하세요">
                     </div>
                     <div class="mb-3">
                         <label for="amount" class="form-label">금액</label>
@@ -296,7 +307,15 @@
                     </div>
                     <div class="mb-3">
                         <label for="card" class="form-label">결제수단</label>
-                        <input type="text" class="form-control" id="card" value="현금">
+                        <select class="form-select" id="card" required>
+                            <option value="TD">TD</option>
+                            <option value="BMO Debit">BMO Debit</option>
+                            <option value="BMO WJ">BMO WJ</option>
+                            <option value="BMO JH">BMO JH</option>
+                            <option value="BMO WH">BMO WH</option>
+                            <option value="BMO Ryan">BMO Ryan</option>
+                            <option value="현금">현금</option>
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary">추가</button>
                 </form>
@@ -500,7 +519,17 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit-category" class="form-label">카테고리</label>
-                        <input type="text" class="form-control" id="edit-category">
+                        <select class="form-select" id="edit-category">
+                            <option value="그로서리">그로서리</option>
+                            <option value="외식">외식</option>
+                            <option value="주유+주차">주유+주차</option>
+                            <option value="고정비용">고정비용</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="editCustomCategoryGroup" style="display: none;">
+                        <label for="editCustomCategory" class="form-label">카테고리 이름</label>
+                        <input type="text" class="form-control" id="editCustomCategory" placeholder="카테고리 이름을 입력하세요">
                     </div>
                     <div class="mb-3">
                         <label for="edit-amount" class="form-label">금액</label>
@@ -508,7 +537,15 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit-card" class="form-label">결제수단</label>
-                        <input type="text" class="form-control" id="edit-card">
+                        <select class="form-select" id="edit-card">
+                            <option value="TD">TD</option>
+                            <option value="BMO Debit">BMO Debit</option>
+                            <option value="BMO WJ">BMO WJ</option>
+                            <option value="BMO JH">BMO JH</option>
+                            <option value="BMO WH">BMO WH</option>
+                            <option value="BMO Ryan">BMO Ryan</option>
+                            <option value="현금">현금</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
