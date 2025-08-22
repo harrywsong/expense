@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 
-    <!-- Firebase SDKs -->
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
@@ -20,14 +19,12 @@
 
 </head>
 <body>
-    <!-- Loading Spinner -->
     <div id="loading-spinner" class="loading-overlay">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">로딩중...</span>
         </div>
     </div>
 
-    <!-- Login Page -->
     <div id="login-page" class="login-container" style="display: none;">
         <div class="container">
             <div class="row justify-content-center">
@@ -37,24 +34,22 @@
                             <div class="logo">
                                 <i class="fas fa-wallet"></i>
                             </div>
-                            <h1 class="app-title">가계부</h1>
-                            <p class="app-subtitle">개인 재정 관리 시스템</p>
+                            <h1 class="app-title" data-lang-key="appTitle">가계부</h1>
+                            <p class="app-subtitle" data-lang-key="appSubtitle">개인 재정 관리 시스템</p>
                         </div>
 
                         <div class="login-body">
-                            <!-- Google Sign-In Button -->
-                            <button type="button" class="btn btn-outline-primary btn-block" id="googleSignInBtn">
+                            <button type="button" class="btn btn-outline-primary btn-block" id="googleSignInBtn" data-lang-key="googleSignInBtn">
                                 <i class="fab fa-google me-2"></i> Google로 로그인
                             </button>
 
                             <div class="divider">
-                                <span>또는</span>
+                                <span data-lang-key="or">또는</span>
                             </div>
 
-                            <!-- Email/Password Form -->
                             <form id="loginForm">
                                 <div class="form-group">
-                                    <label for="emailInput" class="form-label">이메일</label>
+                                    <label for="emailInput" class="form-label" data-lang-key="email">이메일</label>
                                     <div class="input-group">
                                         <span class="input-icon">
                                             <i class="fas fa-envelope"></i>
@@ -64,7 +59,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="passwordInput" class="form-label">비밀번호</label>
+                                    <label for="passwordInput" class="form-label" data-lang-key="password">비밀번호</label>
                                     <div class="input-group">
                                         <span class="input-icon">
                                             <i class="fas fa-lock"></i>
@@ -74,33 +69,32 @@
                                 </div>
 
                                 <div class="login-actions">
-                                    <button type="submit" class="btn btn-primary btn-block">
+                                    <button type="submit" class="btn btn-primary btn-block" data-lang-key="loginBtn">
                                         <i class="fas fa-sign-in-alt me-2"></i> 로그인
                                     </button>
 
                                     <div class="auth-links">
-                                        <a href="#" id="signupLink">계정이 없으신가요? 회원가입</a>
-                                        <a href="#" id="forgotPasswordLink">비밀번호를 잊으셨나요?</a>
+                                        <a href="#" id="signupLink" data-lang-key="noAccount">계정이 없으신가요? 회원가입</a>
+                                        <a href="#" id="forgotPasswordLink" data-lang-key="forgotPassword">비밀번호를 잊으셨나요?</a>
                                     </div>
                                 </div>
                             </form>
                         </div>
                     </div>
 
-                    <!-- Sign Up Form (initially hidden) -->
                     <div class="login-card" id="signup-form" style="display: none;">
                         <div class="login-header">
                             <div class="logo">
                                 <i class="fas fa-wallet"></i>
                             </div>
-                            <h1 class="app-title">회원가입</h1>
-                            <p class="app-subtitle">새 계정을 만드세요</p>
+                            <h1 class="app-title" data-lang-key="signupTitle">회원가입</h1>
+                            <p class="app-subtitle" data-lang-key="newAccountSubtitle">새 계정을 만드세요</p>
                         </div>
 
                         <div class="login-body">
                             <form id="signupForm">
                                 <div class="form-group">
-                                    <label for="signupEmail" class="form-label">이메일</label>
+                                    <label for="signupEmail" class="form-label" data-lang-key="email">이메일</label>
                                     <div class="input-group">
                                         <span class="input-icon">
                                             <i class="fas fa-envelope"></i>
@@ -110,7 +104,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="signupPassword" class="form-label">비밀번호</label>
+                                    <label for="signupPassword" class="form-label" data-lang-key="password">비밀번호</label>
                                     <div class="input-group">
                                         <span class="input-icon">
                                             <i class="fas fa-lock"></i>
@@ -120,7 +114,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                                    <label for="confirmPassword" class="form-label" data-lang-key="confirmPassword">비밀번호 확인</label>
                                     <div class="input-group">
                                         <span class="input-icon">
                                             <i class="fas fa-lock"></i>
@@ -130,12 +124,12 @@
                                 </div>
 
                                 <div class="login-actions">
-                                    <button type="submit" class="btn btn-primary btn-block">
+                                    <button type="submit" class="btn btn-primary btn-block" data-lang-key="signupBtn">
                                         <i class="fas fa-user-plus me-2"></i> 회원가입
                                     </button>
 
                                     <div class="auth-links">
-                                        <a href="#" id="loginLink">이미 계정이 있으신가요? 로그인</a>
+                                        <a href="#" id="loginLink" data-lang-key="alreadyAccount">이미 계정이 있으신가요? 로그인</a>
                                     </div>
                                 </div>
                             </form>
@@ -146,59 +140,58 @@
         </div>
     </div>
 
-    <!-- App Container (hidden initially) -->
     <div id="app-container" class="d-flex" style="display: none;">
         <div class="sidebar d-flex flex-column flex-shrink-0 p-3 bg-light">
             <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
                 <i class="fas fa-wallet fs-4 me-2"></i>
-                <span class="fs-4 fw-bold">가계부</span>
+                <span class="fs-4 fw-bold" data-lang-key="appTitleSidebar">가계부</span>
             </a>
             <hr>
-                        <ul class="nav nav-pills flex-column mb-auto sidebar-nav">
+            <ul class="nav nav-pills flex-column mb-auto sidebar-nav">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active" data-target="dashboard">
+                    <a href="#" class="nav-link active" data-target="dashboard" data-lang-key="dashboardLink">
                         <i class="fas fa-tachometer-alt me-2"></i>
                         대시보드
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="add">
+                    <a href="#" class="nav-link link-dark" data-target="add" data-lang-key="addLink">
                         <i class="fas fa-plus-circle me-2"></i>
                         항목 추가
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="view">
+                    <a href="#" class="nav-link link-dark" data-target="view" data-lang-key="viewLink">
                         <i class="fas fa-list-ul me-2"></i>
                         전체 내역
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="monthly">
+                    <a href="#" class="nav-link link-dark" data-target="monthly" data-lang-key="monthlyLink">
                         <i class="fas fa-calendar-alt me-2"></i>
                         월별 내역
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="budgets">
+                    <a href="#" class="nav-link link-dark" data-target="budgets" data-lang-key="budgetsLink">
                         <i class="fas fa-piggy-bank me-2"></i>
                         예산 관리
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="viz">
+                    <a href="#" class="nav-link link-dark" data-target="viz" data-lang-key="vizLink">
                         <i class="fas fa-chart-pie me-2"></i>
                         시각화
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="compare">
+                    <a href="#" class="nav-link link-dark" data-target="compare" data-lang-key="compareLink">
                         <i class="fas fa-balance-scale-right me-2"></i>
                         월별 비교
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link link-dark" data-target="export">
+                    <a href="#" class="nav-link link-dark" data-target="export" data-lang-key="exportLink">
                         <i class="fas fa-file-export me-2"></i>
                         데이터 내보내기
                     </a>
@@ -207,7 +200,12 @@
             <hr>
             <div class="mt-auto p-2">
                 <button id="theme-toggle" class="btn btn-outline-primary w-100">
-                    <i class="fas fa-moon me-2"></i> 다크 모드
+                    <i class="fas fa-moon me-2"></i> <span data-lang-key="themeToggle">다크 모드</span>
+                </button>
+            </div>
+            <div class="mt-2 p-2">
+                <button id="language-toggle" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-language me-2"></i> <span data-lang-key="languageToggle">한국어</span>
                 </button>
             </div>
             <hr>
@@ -221,19 +219,18 @@
                     </div>
                 </a>
                 <ul class="dropdown-menu text-small shadow">
-                    <li><a class="dropdown-item" href="#" id="logoutBtn">로그아웃</a></li>
+                    <li><a class="dropdown-item" href="#" id="logoutBtn" data-lang-key="logout">로그아웃</a></li>
                 </ul>
             </div>
         </div>
-
         <div class="main-content flex-grow-1 p-4">
             <div id="dashboard" class="content-section active">
-                <h1 class="mb-4">대시보드</h1>
+                <h1 class="mb-4" data-lang-key="dashboardTitle">대시보드</h1>
                 <div class="row">
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card text-white bg-success">
                             <div class="card-body">
-                                <h5 class="card-title">이번 달 수입</h5>
+                                <h5 class="card-title" data-lang-key="thisMonthIncome">이번 달 수입</h5>
                                 <p class="card-text fs-3" id="dashboard-income">$0</p>
                             </div>
                         </div>
@@ -241,7 +238,7 @@
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card text-white bg-danger">
                             <div class="card-body">
-                                <h5 class="card-title">이번 달 지출</h5>
+                                <h5 class="card-title" data-lang-key="thisMonthExpense">이번 달 지출</h5>
                                 <p class="card-text fs-3" id="dashboard-expense">$0</p>
                             </div>
                         </div>
@@ -249,7 +246,7 @@
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card text-white bg-info">
                             <div class="card-body">
-                                <h5 class="card-title">지난 달 지출</h5>
+                                <h5 class="card-title" data-lang-key="lastMonthExpense">지난 달 지출</h5>
                                 <p class="card-text fs-3" id="dashboard-prev-expense">$0</p>
                             </div>
                         </div>
@@ -257,341 +254,351 @@
                     <div class="col-md-6 col-lg-3 mb-4">
                         <div class="card text-white bg-primary">
                             <div class="card-body">
-                                <h5 class="card-title">순수입</h5>
+                                <h5 class="card-title" data-lang-key="netIncome">순수입</h5>
                                 <p class="card-text fs-3" id="dashboard-net-income">$0</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div id="budget-alerts" class="mt-4"></div>
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <h5 class="card-title">이번 달 카테고리별 지출</h5>
-                        <div style="height: 300px;">
-                            <canvas id="dashboardChart"></canvas>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title" data-lang-key="expenseByCategoryTitle">카테고리별 지출</h5>
+                                <canvas id="dashboardChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="add" class="content-section">
-                <h1 class="mb-4">항목 추가</h1>
-                <form id="addForm">
-                    <div class="mb-3">
-                        <label for="type" class="form-label">구분</label>
-                        <select class="form-select" id="type" required>
-                            <option value="expense">지출</option>
-                            <option value="income">수입</option>
-                        </select>
+                <h1 class="mb-4" data-lang-key="addTitle">항목 추가</h1>
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <form id="addForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="type" class="form-label" data-lang-key="type">유형</label>
+                                    <select class="form-select" id="type" required>
+                                        <option value="expense" data-lang-key="expense">지출</option>
+                                        <option value="income" data-lang-key="income">수입</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="date" class="form-label" data-lang-key="date">날짜</label>
+                                    <input type="date" class="form-control" id="date" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label" data-lang-key="category">카테고리</label>
+                                    <select class="form-select" id="category" required>
+                                        <option value="" data-lang-key="selectCategory">카테고리 선택</option>
+                                        <option value="그로서리" data-lang-key="category-grocery">그로서리</option>
+                                        <option value="외식" data-lang-key="category-dining">외식</option>
+                                        <option value="교통비" data-lang-key="category-transportation">교통비</option>
+                                        <option value="유흥" data-lang-key="category-entertainment">유흥</option>
+                                        <option value="쇼핑" data-lang-key="category-shopping">쇼핑</option>
+                                        <option value="건강/의료" data-lang-key="category-health">건강/의료</option>
+                                        <option value="고정비용" data-lang-key="category-fixed">고정비용</option>
+                                        <option value="급여" data-lang-key="category-salary">급여</option>
+                                        <option value="기타" data-lang-key="category-other">기타</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3" id="customCategoryGroup" style="display: none;">
+                                    <label for="customCategory" class="form-label" data-lang-key="customCategory">직접 입력</label>
+                                    <input type="text" class="form-control" id="customCategory" placeholder="카테고리를 입력하세요">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="description" class="form-label" data-lang-key="description">설명</label>
+                                    <input type="text" class="form-control" id="description" placeholder="설명을 입력하세요" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="amount" class="form-label" data-lang-key="amount">금액</label>
+                                    <input type="number" class="form-control" id="amount" placeholder="금액을 입력하세요" required min="1">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="card" class="form-label" data-lang-key="paymentMethod">결제 수단</label>
+                                <input type="text" class="form-control" id="card" placeholder="결제 수단을 입력하세요">
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-3" data-lang-key="addEntryBtn">
+                                <i class="fas fa-plus me-2"></i> 항목 추가
+                            </button>
+                        </form>
                     </div>
-                    <div class="mb-3">
-                        <label for="date" class="form-label">날짜</label>
-                        <input type="date" class="form-control" id="date">
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">내용</label>
-                        <input type="text" class="form-control" id="description" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="category" class="form-label">카테고리</label>
-                        <select class="form-select" id="category" required>
-                            <option value="">카테고리 선택</option>
-                            <option value="그로서리">그로서리</option>
-                            <option value="외식">외식</option>
-                            <option value="주유+주차">주유+주차</option>
-                            <option value="고정비용">고정비용</option>
-                            <option value="기타">기타</option>
-                        </select>
-                    </div>
-                    <div class="mb-3" id="customCategoryGroup" style="display: none;">
-                        <label for="customCategory" class="form-label">카테고리 이름</label>
-                        <input type="text" class="form-control" id="customCategory" placeholder="카테고리 이름을 입력하세요">
-                    </div>
-                    <div class="mb-3">
-                        <label for="amount" class="form-label">금액</label>
-    <input type="number" step="0.01" class="form-control" id="amount" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="card" class="form-label">결제수단</label>
-                        <select class="form-select" id="card" required>
-                            <option value="TD">TD</option>
-                            <option value="BMO Debit">BMO Debit</option>
-                            <option value="BMO WJ">BMO WJ</option>
-                            <option value="BMO JH">BMO JH</option>
-                            <option value="BMO WH">BMO WH</option>
-                            <option value="BMO Ryan">BMO Ryan</option>
-                            <option value="현금">현금</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary">추가</button>
-                </form>
+                </div>
             </div>
 
             <div id="view" class="content-section">
-                <h1 class="mb-4">전체 내역</h1>
-                <div class="card mb-4">
+                <h1 class="mb-4" data-lang-key="viewAllTitle">전체 내역</h1>
+                <div class="card shadow-sm mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">필터</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-3">
-                                <label for="fromDate" class="form-label">시작 날짜</label>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="fromDate" class="form-label" data-lang-key="fromDate">시작일</label>
                                 <input type="date" class="form-control" id="fromDate">
                             </div>
-                            <div class="col-md-6 col-lg-3">
-                                <label for="toDate" class="form-label">종료 날짜</label>
+                            <div class="col-md-3 mb-3">
+                                <label for="toDate" class="form-label" data-lang-key="toDate">종료일</label>
                                 <input type="date" class="form-control" id="toDate">
                             </div>
-                            <div class="col-md-6 col-lg-3">
-                                <label for="filterCategory" class="form-label">카테고리</label>
+                            <div class="col-md-3 mb-3">
+                                <label for="filterCategory" class="form-label" data-lang-key="categoryFilter">카테고리 필터</label>
                                 <select class="form-select" id="filterCategory">
-                                    <option value="">전체</option>
+                                    <option value="" data-lang-key="allCategories">모든 카테고리</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 col-lg-3">
-                                <label for="descSearch" class="form-label">내용 검색</label>
-                                <input type="text" class="form-control" id="descSearch">
+                            <div class="col-md-3 mb-3">
+                                <label for="descSearch" class="form-label" data-lang-key="descriptionSearch">설명 검색</label>
+                                <input type="text" class="form-control" id="descSearch" placeholder="설명으로 검색">
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="expenseTable">
+                    <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>날짜</th>
-                                <th>구분</th>
-                                <th>내용</th>
-                                <th>카테고리</th>
-                                <th>금액</th>
-                                <th>결제수단</th>
-                                <th></th>
+                                <th data-lang-key="tableDate">날짜</th>
+                                <th data-lang-key="tableDescription">설명</th>
+                                <th data-lang-key="tableCategory">카테고리</th>
+                                <th data-lang-key="tableAmount">금액</th>
+                                <th data-lang-key="tablePaymentMethod">결제 수단</th>
+                                <th data-lang-key="tableActions">액션</th>
                             </tr>
                         </thead>
-                        <tbody></tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">총 지출:</td>
-                                <td colspan="3" class="fw-bold text-danger" id="filteredTotal">$0</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold">총 수입:</td>
-                                <td colspan="3" class="fw-bold text-success" id="filteredIncomeTotal">$0</td>
-                            </tr>
-                        </tfoot>
+                        <tbody id="expenseTableBody">
+                            </tbody>
                     </table>
+                </div>
+
+                <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editModalLabel" data-lang-key="editEntryModalTitle">내역 수정</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editForm">
+                                    <input type="hidden" id="edit-id">
+                                    <div class="mb-3">
+                                        <label for="edit-date" class="form-label" data-lang-key="date">날짜</label>
+                                        <input type="date" class="form-control" id="edit-date" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-type" class="form-label" data-lang-key="type">유형</label>
+                                        <select class="form-select" id="edit-type" required>
+                                            <option value="expense" data-lang-key="expense">지출</option>
+                                            <option value="income" data-lang-key="income">수입</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-category" class="form-label" data-lang-key="category">카테고리</label>
+                                        <select class="form-select" id="edit-category" required>
+                                            <option value="" data-lang-key="selectCategory">카테고리 선택</option>
+                                            <option value="그로서리" data-lang-key="category-grocery">그로서리</option>
+                                            <option value="외식" data-lang-key="category-dining">외식</option>
+                                            <option value="교통비" data-lang-key="category-transportation">교통비</option>
+                                            <option value="유흥" data-lang-key="category-entertainment">유흥</option>
+                                            <option value="쇼핑" data-lang-key="category-shopping">쇼핑</option>
+                                            <option value="건강/의료" data-lang-key="category-health">건강/의료</option>
+                                            <option value="고정비용" data-lang-key="category-fixed">고정비용</option>
+                                            <option value="급여" data-lang-key="category-salary">급여</option>
+                                            <option value="기타" data-lang-key="category-other">기타</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3" id="editCustomCategoryGroup" style="display: none;">
+                                        <label for="editCustomCategory" class="form-label" data-lang-key="customCategory">직접 입력</label>
+                                        <input type="text" class="form-control" id="editCustomCategory" placeholder="카테고리를 입력하세요">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-description" class="form-label" data-lang-key="description">설명</label>
+                                        <input type="text" class="form-control" id="edit-description" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-amount" class="form-label" data-lang-key="amount">금액</label>
+                                        <input type="number" class="form-control" id="edit-amount" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="edit-card" class="form-label" data-lang-key="paymentMethod">결제 수단</label>
+                                        <input type="text" class="form-control" id="edit-card">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" data-lang-key="saveChanges">저장</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="monthly" class="content-section">
-                <h1 class="mb-4">월별 내역</h1>
+                <h1 class="mb-4" data-lang-key="monthlyTitle">월별 내역</h1>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <button class="btn btn-outline-secondary" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
-                    <h2 class="mb-0" id="currentMonthDisplay"></h2>
+                    <h2 id="currentMonthDisplay" class="mb-0"></h2>
                     <button class="btn btn-outline-secondary" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title" data-lang-key="monthlyIncome">월 수입</h5>
+                                <p class="card-text fs-3" id="monthly-income">$0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h5 class="card-title" data-lang-key="monthlyExpense">월 지출</h5>
+                                <p class="card-text fs-3" id="monthly-expense">$0</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>날짜</th>
-                                <th>구분</th>
-                                <th>내용</th>
-                                <th>카테고리</th>
-                                <th>금액</th>
-                                <th>결제수단</th>
+                                <th data-lang-key="tableDate">날짜</th>
+                                <th data-lang-key="tableDescription">설명</th>
+                                <th data-lang-key="tableCategory">카테고리</th>
+                                <th data-lang-key="tableAmount">금액</th>
+                                <th data-lang-key="tablePaymentMethod">결제 수단</th>
                             </tr>
                         </thead>
-                        <tbody id="monthlyTableBody"></tbody>
+                        <tbody id="monthlyTableBody">
+                            </tbody>
                     </table>
                 </div>
             </div>
 
             <div id="budgets" class="content-section">
-                <h1 class="mb-4">예산 관리</h1>
-                <div class="card mb-4">
-    <div class="card-body">
-        <h5 class="card-title">예산 추가/수정</h5>
-        <form id="budgetForm">
-            <div class="mb-3">
-                <label for="budgetCategory" class="form-label">카테고리</label>
-                <select class="form-select" id="budgetCategory" required>
-                    <option value="">카테고리 선택</option>
-                    <option value="그로서리">그로서리</option>
-                    <option value="외식">외식</option>
-                    <option value="주유+주차">주유+주차</option>
-                    <option value="고정비용">고정비용</option>
-                    <option value="기타">기타</option>
-                </select>
-            </div>
-            <div class="mb-3" id="budgetCustomCategoryGroup" style="display: none;">
-                <label for="budgetCustomCategory" class="form-label">카테고리 이름</label>
-                <input type="text" class="form-control" id="budgetCustomCategory" placeholder="카테고리 이름을 입력하세요">
-            </div>
-            <div class="mb-3">
-                <label for="budgetAmount" class="form-label">예산 금액</label>
-                <input type="number" step="1000" class="form-control" id="budgetAmount" required>
-            </div>
-            <button type="button" class="btn btn-primary" id="addBudgetBtn">예산 설정</button>
-        </form>
-    </div>
-</div>
-                <div class="card">
+                <h1 class="mb-4" data-lang-key="budgetsTitle">예산 관리</h1>
+                <div class="card shadow-sm mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">설정된 예산</h5>
-                        <div id="budget-list">
-                            <p class="text-muted">설정된 예산이 없습니다.</p>
-                        </div>
+                        <form id="budgetForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="budgetCategory" class="form-label" data-lang-key="category">카테고리</label>
+                                    <select class="form-select" id="budgetCategory" required>
+                                        <option value="" data-lang-key="selectCategory">카테고리 선택</option>
+                                        <option value="그로서리" data-lang-key="category-grocery">그로서리</option>
+                                        <option value="외식" data-lang-key="category-dining">외식</option>
+                                        <option value="교통비" data-lang-key="category-transportation">교통비</option>
+                                        <option value="유흥" data-lang-key="category-entertainment">유흥</option>
+                                        <option value="쇼핑" data-lang-key="category-shopping">쇼핑</option>
+                                        <option value="건강/의료" data-lang-key="category-health">건강/의료</option>
+                                        <option value="고정비용" data-lang-key="category-fixed">고정비용</option>
+                                        <option value="기타" data-lang-key="category-other">기타</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3" id="budgetCustomCategoryGroup" style="display: none;">
+                                    <label for="budgetCustomCategory" class="form-label" data-lang-key="customCategory">직접 입력</label>
+                                    <input type="text" class="form-control" id="budgetCustomCategory" placeholder="카테고리를 입력하세요">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="budgetAmount" class="form-label" data-lang-key="amount">예산 금액</label>
+                                <input type="number" class="form-control" id="budgetAmount" placeholder="예산 금액을 입력하세요" required min="1">
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="addBudgetBtn" data-lang-key="setBudget">
+                                <i class="fas fa-plus me-2"></i> 예산 설정
+                            </button>
+                        </form>
                     </div>
                 </div>
+
+                <div class="budget-list" id="budgetList">
+                    </div>
             </div>
 
             <div id="viz" class="content-section">
-                <h1 class="mb-4">시각화</h1>
-                <div class="d-flex mb-3 align-items-center">
-                    <label for="vizMonth" class="me-2">월:</label>
-                    <input type="month" id="vizMonth" class="form-control me-3" style="width: auto;">
-                    <label for="vizType" class="me-2">차트 유형:</label>
-                    <select id="vizType" class="form-select" style="width: auto;">
-                        <option value="pie">파이 차트</option>
-                        <option value="bar">막대 그래프</option>
-                    </select>
-                </div>
-                <div class="card">
+                <h1 class="mb-4" data-lang-key="vizTitle">시각화</h1>
+                <div class="card shadow-sm mb-4">
                     <div class="card-body">
-                        <div style="height: 400px;">
-                            <canvas id="vizChart"></canvas>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="vizMonth" class="form-label" data-lang-key="selectMonth">월 선택</label>
+                                <input type="month" class="form-control" id="vizMonth">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="vizType" class="form-label" data-lang-key="chartType">차트 유형</label>
+                                <select class="form-select" id="vizType">
+                                    <option value="pie" data-lang-key="pieChart">파이 차트</option>
+                                    <option value="bar" data-lang-key="barChart">바 차트</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <canvas id="mainChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="compare" class="content-section">
-                <h1 class="mb-4">월별 비교</h1>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label for="compareMonth1" class="form-label">첫 번째 월</label>
-                        <input type="month" class="form-control" id="compareMonth1">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="compareMonth2" class="form-label">두 번째 월</label>
-                        <input type="month" class="form-control" id="compareMonth2">
-                    </div>
-                </div>
-                <div class="card">
+                <h1 class="mb-4" data-lang-key="compareTitle">월별 비교</h1>
+                <div class="card shadow-sm mb-4">
                     <div class="card-body">
-                        <h5 class="card-title">결과</h5>
-                        <div id="compareResults">
-                            <p class="text-muted">비교할 두 달을 선택하세요.</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="compareMonth1" class="form-label" data-lang-key="firstMonth">첫 번째 월</label>
+                                <input type="month" class="form-control" id="compareMonth1">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="compareMonth2" class="form-label" data-lang-key="secondMonth">두 번째 월</label>
+                                <input type="month" class="form-control" id="compareMonth2">
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div id="compareResult" class="mt-4">
+                    </div>
             </div>
 
             <div id="export" class="content-section">
-                <h1 class="mb-4">데이터 내보내기</h1>
-                <div class="card">
+                <h1 class="mb-4" data-lang-key="exportTitle">데이터 내보내기</h1>
+                <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">월별 데이터 내보내기 (CSV)</h5>
-                        <div class="row g-3 align-items-center">
-                            <div class="col-auto">
-                                <label for="exportMonth" class="col-form-label">내보낼 월:</label>
-                            </div>
-                            <div class="col-auto">
-                                <input type="month" class="form-control" id="exportMonth">
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-primary" onclick="exportMonth()">내보내기</button>
-                            </div>
-                        </div>
+                        <p data-lang-key="exportDescription">모든 지출 데이터를 CSV 파일로 다운로드합니다.</p>
+                        <button class="btn btn-success" id="exportBtn" data-lang-key="downloadCsv">
+                            <i class="fas fa-download me-2"></i> CSV 다운로드
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">항목 수정</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="messageModalTitle">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" id="edit-id">
-                    <div class="mb-3">
-                        <label for="edit-type" class="form-label">구분</label>
-                        <select class="form-select" id="edit-type">
-                            <option value="expense">지출</option>
-                            <option value="income">수입</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-date" class="form-label">날짜</label>
-                        <input type="date" class="form-control" id="edit-date">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-description" class="form-label">내용</label>
-                        <input type="text" class="form-control" id="edit-description">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-category" class="form-label">카테고리</label>
-                        <select class="form-select" id="edit-category">
-                            <option value="그로서리">그로서리</option>
-                            <option value="외식">외식</option>
-                            <option value="주유+주차">주유+주차</option>
-                            <option value="고정비용">고정비용</option>
-                            <option value="기타">기타</option>
-                        </select>
-                    </div>
-                    <div class="mb-3" id="editCustomCategoryGroup" style="display: none;">
-                        <label for="editCustomCategory" class="form-label">카테고리 이름</label>
-                        <input type="text" class="form-control" id="editCustomCategory" placeholder="카테고리 이름을 입력하세요">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-amount" class="form-label">금액</label>
-    <input type="number" step="0.01" class="form-control" id="edit-amount">
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit-card" class="form-label">결제수단</label>
-                        <select class="form-select" id="edit-card">
-                            <option value="TD">TD</option>
-                            <option value="BMO Debit">BMO Debit</option>
-                            <option value="BMO WJ">BMO WJ</option>
-                            <option value="BMO JH">BMO JH</option>
-                            <option value="BMO WH">BMO WH</option>
-                            <option value="BMO Ryan">BMO Ryan</option>
-                            <option value="현금">현금</option>
-                        </select>
-                    </div>
+                <div class="modal-body" id="messageModalBody">
+                    ...
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                    <button type="button" class="btn btn-primary" onclick="saveEdit()">저장</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Message Modal -->
-    <div class="modal fade" id="messageModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="messageModalTitle"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="messageModalBody"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">확인</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" data-lang-key="close">닫기</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script type="module" src="firebase_config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
