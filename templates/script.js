@@ -1,9 +1,18 @@
 // script.js
 
 // Import Firebase functions from the SDKs
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Import Firebase functions from the SDKs
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut,
+    signInWithEmailAndPassword,
+    GoogleAuthProvider,
+    signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -77,10 +86,28 @@ document.addEventListener('DOMContentLoaded', () => {
         await signOut(auth);
     });
 
-    // Initial sign-in attempt for anonymous users on page load
-    signInAnonymously(auth).catch(error => {
-        console.error("Anonymous authentication failed:", error);
-    });
+// Google Sign-In
+const googleSignInBtn = document.getElementById('googleSignInBtn');
+googleSignInBtn.addEventListener('click', async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.error("Google Sign-In failed:", error);
+    }
+});
+
+// Email/Password Sign-In
+const emailSignInBtn = document.getElementById('emailSignInBtn');
+emailSignInBtn.addEventListener('click', async () => {
+    const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        console.error("Email/Password Sign-In failed:", error);
+    }
+});
 
     // --- Navigation Logic ---
     function setupNavigation() {
