@@ -437,3 +437,7 @@ body.dark-mode .sidebar {
 .sidebar {
     background-color: var(--sidebar-bg);
 }
+
+.link-dark {
+    color: inherit !important; /* This will make it inherit the text color from its parent element */
+}

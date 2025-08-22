@@ -1209,6 +1209,43 @@ async function checkBudgets() {
     }
 }
 
+async function exportCSV() {
+    const expenses = await getFilteredExpenses();
+
+    if (expenses.length === 0) {
+        showMessage('오류', '내보낼 데이터가 없습니다.');
+        return;
+    }
+
+    const headers = ["날짜", "유형", "설명", "카테고리", "금액", "카드"];
+    const csvRows = [headers.join(',')];
+
+    expenses.forEach(expense => {
+        const row = [
+            `"${expense.date}"`,
+            `"${expense.type === 'income' ? '수입' : '지출'}"`,
+            `"${expense.description.replace(/"/g, '""')}"`,
+            `"${expense.category.replace(/"/g, '""')}"`,
+            expense.amount,
+            `"${expense.card}"`
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'expenses.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showMessage('성공', '데이터가 CSV 파일로 성공적으로 내보내졌습니다.');
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
     // Set up authentication
