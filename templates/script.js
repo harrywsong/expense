@@ -608,6 +608,7 @@ function plotDashboardChart(data) {
 // Data management functions
 // Data management functions
 // Data management functions
+// Data management functions
 async function addExpense(e) {
     e.preventDefault();
     const finalCategory = getFinalCategory();
