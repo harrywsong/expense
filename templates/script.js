@@ -1250,6 +1250,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show loading spinner initially
     loadingSpinner.style.display = 'flex';
+
+    const themeToggleButton = document.getElementById('theme-toggle');
+
+    // Check for saved theme preference or system preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.body.classList.add('dark-mode');
+        if (themeToggleButton) {
+            themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i> Light Mode';
+        }
+    } else {
+        if (themeToggleButton) {
+            themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i> Dark Mode';
+        }
+    }
+
+    if (themeToggleButton) {
+        themeToggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('theme', 'dark');
+                themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i> Light Mode';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i> Dark Mode';
+            }
+        });
+    }
 });
 
 // Global function exports for onclick handlers
