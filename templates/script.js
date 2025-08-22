@@ -112,11 +112,16 @@ async function handleGoogleSignIn() {
         showMessage('로그인 성공', 'Google 계정으로 로그인되었습니다.');
     } catch (error) {
         console.error('Google sign-in error:', error);
-        showMessage('로그인 실패', 'Google 로그인에 실패했습니다.');
+        let message = 'Google 로그인에 실패했습니다.';
+        if (error.code === 'auth/popup-closed-by-user') {
+            message = '로그인이 취소되었습니다.';
+        } else if (error.code === 'auth/popup-blocked') {
+            message = '팝업이 차단되었습니다. 팝업을 허용해주세요.';
+        }
+        showMessage('로그인 실패', message);
         loadingSpinner.style.display = 'none';
     }
 }
-
 async function handlePasswordReset() {
     const email = document.getElementById('emailInput').value;
     if (!email) {
@@ -1107,6 +1112,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
         e.preventDefault();
         handlePasswordReset();
+    });
+
+    // Google Sign-In button
+    document.getElementById('googleSignInBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        handleGoogleSignIn();
     });
 
     // Logout functionality

@@ -6,6 +6,7 @@
     <title>가계부</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,8 +18,6 @@
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
 
-    <!-- Google Sign-In -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <!-- Loading Spinner -->
@@ -44,21 +43,9 @@
 
                         <div class="login-body">
                             <!-- Google Sign-In Button -->
-                            <div id="g_id_onload"
-                                 data-client_id="1023257780949-your-client-id.apps.googleusercontent.com"
-                                 data-context="signin"
-                                 data-ux_mode="popup"
-                                 data-callback="handleGoogleSignIn">
-                            </div>
-                            <div class="g_id_signin"
-                                 data-type="standard"
-                                 data-size="large"
-                                 data-theme="outline"
-                                 data-text="signin_with"
-                                 data-shape="rectangular"
-                                 data-logo_alignment="left"
-                                 data-width="100%">
-                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-block" id="googleSignInBtn">
+                                <i class="fab fa-google me-2"></i> Google로 로그인
+                            </button>
 
                             <div class="divider">
                                 <span>또는</span>
