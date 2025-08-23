@@ -257,6 +257,11 @@ body {
     transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
+/* Ensure link-dark class adapts to dark mode */
+.sidebar-nav .link-dark {
+    color: var(--subtle-text) !important;
+}
+
 .sidebar-nav .nav-link:hover {
     color: var(--primary-hover);
     background-color: var(--table-hover);
@@ -268,6 +273,20 @@ body {
     box-shadow: 0 4px 10px rgba(93, 95, 239, 0.2);
 }
 
+/* Fix user info color for dark mode */
+.dropdown .d-flex.align-items-center.link-dark {
+    color: var(--text-color) !important;
+}
+
+.dropdown-menu.text-small {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+.dropdown-item {
+    color: var(--text-color);
+}
+
 .user-info small {
     display: block;
     white-space: nowrap;
@@ -275,6 +294,11 @@ body {
     text-overflow: ellipsis;
     max-width: 150px;
 }
+
+.user-info .text-muted {
+    color: var(--subtle-text) !important;
+}
+
 
 /*
     --------------------------------
@@ -336,7 +360,7 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
 
 .chart-container {
     position: relative;
-    height: 40vh; /* Adjust this value as needed */
+    height: 40vh;
     max-height: 400px;
 }
 
