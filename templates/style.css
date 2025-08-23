@@ -321,10 +321,29 @@ body {
 }
 
 /* Special card colors for dashboard */
+.card.bg-success, .card.bg-danger, .card.bg-info, .card.bg-warning {
+    color: white !important;
+}
 .card.bg-success { background-color: #28a745 !important; }
 .card.bg-danger { background-color: #dc3545 !important; }
 .card.bg-info { background-color: #17a2b8 !important; }
 .card.bg-warning { background-color: #ffc107 !important; }
+
+body.dark-mode .card.bg-success { background-color: #2e8b57 !important; }
+body.dark-mode .card.bg-danger { background-color: #b22222 !important; }
+body.dark-mode .card.bg-info { background-color: #1a7587 !important; }
+body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
+
+.chart-container {
+    position: relative;
+    height: 40vh; /* Adjust this value as needed */
+    max-height: 400px;
+}
+
+#dashboardChart {
+    height: 100%;
+    width: 100%;
+}
 
 /*
     --------------------------------
@@ -398,43 +417,3 @@ body {
         display: none; /* Hide user dropdown on small screens */
     }
 }
-
-/*
-    --------------------------------
-    App Container
-    --------------------------------
-*/
-
-.sidebar-nav .nav-link {
-    color: var(--subtle-text);
-    /* ... (rest of the code) ... */
-}
-
-/* Correctly color the active navigation link */
-.sidebar-nav .nav-link.active {
-    background-color: var(--primary-color);
-    color: white !important;
-    box-shadow: 0 4px 10px rgba(93, 95, 239, 0.2);
-}
-
-/*
-    --------------------------------
-    Content Sections
-    --------------------------------
-*/
-
-/* ... (rest of the code) ... */
-
-/* Special card colors for dashboard */
-.card.bg-success, .card.bg-danger, .card.bg-info, .card.bg-warning {
-    color: white !important;
-}
-.card.bg-success { background-color: #28a745 !important; }
-.card.bg-danger { background-color: #dc3545 !important; }
-.card.bg-info { background-color: #17a2b8 !important; }
-.card.bg-warning { background-color: #ffc107 !important; }
-
-body.dark-mode .card.bg-success { background-color: #2e8b57 !important; }
-body.dark-mode .card.bg-danger { background-color: #b22222 !important; }
-body.dark-mode .card.bg-info { background-color: #1a7587 !important; }
-body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
