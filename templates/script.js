@@ -26,6 +26,7 @@ import {
 let currentUser = null;
 let mainChart = null;
 let dashboardChart = null;
+let compareChart = null; // Added this line to fix the error
 
 // UI elements
 const loadingSpinner = document.getElementById('loading-spinner');
@@ -181,6 +182,10 @@ async function logout() {
             dashboardChart.destroy();
             dashboardChart = null;
         }
+        if (compareChart) {
+            compareChart.destroy();
+            compareChart = null;
+        }
     } catch (error) {
         console.error('Logout error:', error);
     }
@@ -275,6 +280,89 @@ function getFinalEditCategory() {
     return categorySelect.value;
 }
 
+function loadComparisonChart() {
+    const month1 = document.getElementById('compareMonth1').value;
+    const month2 = document.getElementById('compareMonth2').value;
+
+    if (!month1 || !month2) {
+        document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+        }
+        return;
+    }
+
+    const q = query(collection(db, `users/${currentUser.uid}/transactions`), orderBy('date', 'asc'));
+    getDocs(q).then((querySnapshot) => {
+        const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const expenses1 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month1));
+        const expenses2 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month2));
+
+        const categories1 = expenses1.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+        const categories2 = expenses2.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+
+        const allCategories = [...new Set([...Object.keys(categories1), ...Object.keys(categories2)])];
+
+        const data1 = allCategories.map(cat => categories1[cat] || 0);
+        const data2 = allCategories.map(cat => categories2[cat] || 0);
+
+        if (allCategories.length === 0) {
+            document.getElementById('no-compare-data').style.display = 'block';
+            if (compareChart) {
+                compareChart.destroy();
+            }
+            return;
+        }
+
+        document.getElementById('no-compare-data').style.display = 'none';
+
+        const ctx = document.getElementById('compareChart').getContext('2d');
+        if (compareChart) {
+            compareChart.destroy();
+        }
+
+        compareChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: allCategories,
+                datasets: [{
+                    label: `${month1} 지출`,
+                    data: data1,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }, {
+                    label: `${month2} 지출`,
+                    data: data2,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '금액 ($)'
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
+
 // Navigation setup
 function setupNavigation() {
     const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
@@ -307,7 +395,7 @@ function setupNavigation() {
                 const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 document.getElementById('compareMonth1').value = getMonthKey(getLocalDate());
                 document.getElementById('compareMonth2').value = getMonthKey(prev.toISOString().substring(0, 10));
-                compareExpenses();
+                loadComparisonChart(); // Updated function call
             }
             if (targetId === 'view') {
                 refreshTable();
@@ -358,10 +446,10 @@ function setupNavigation() {
     if (document.getElementById('vizType')) document.getElementById('vizType').addEventListener('change', plotChart);
 
     // Compare controls
-    if (document.getElementById('compareMonth1')) document.getElementById('compareMonth1').addEventListener('change', compareExpenses);
-    if (document.getElementById('compareMonth2')) document.getElementById('compareMonth2').addEventListener('change', compareExpenses);
+    if (document.getElementById('compareMonth1')) document.getElementById('compareMonth1').addEventListener('change', loadComparisonChart); // Updated function call
+    if (document.getElementById('compareMonth2')) document.getElementById('compareMonth2').addEventListener('change', loadComparisonChart); // Updated function call
 
-    if (document.getElementById('exportCsvBtn')) document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+    if (document.getElementById('exportCsvBtn')) document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
 }
 
 // Utility functions
@@ -778,107 +866,142 @@ async function loadMonthlyData() {
         );
         const querySnapshot = await getDocs(q);
         const expenses = [];
+        let totalIncome = 0;
+        let totalExpense = 0;
+        const monthlyStats = {};
+        const categoryDetails = {};
+
         querySnapshot.forEach(doc => {
-            expenses.push({ id: doc.id, ...doc.data() });
+            const expense = { id: doc.id, ...doc.data() };
+            expenses.push(expense);
+
+            if (expense.type === 'income') {
+                totalIncome += expense.amount;
+            } else {
+                totalExpense += expense.amount;
+            }
+
+            // Aggregate monthly stats
+            const card = expense.card || '현금';
+            monthlyStats[card] = (monthlyStats[card] || 0) + expense.amount;
+
+            // Aggregate category details
+            if (expense.type === 'expense') {
+                const category = expense.category || '기타';
+                categoryDetails[category] = (categoryDetails[category] || 0) + expense.amount;
+            }
         });
-        displayTransactions(expenses);
+
+        const tableBody = document.getElementById('monthlyTableBody');
+        tableBody.innerHTML = '';
+        expenses.forEach(exp => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            `;
+        });
+
+        // Update monthly summary boxes
+        document.getElementById('monthlyIncome').textContent = formatCurrency(totalIncome);
+        document.getElementById('monthlyExpense').textContent = formatCurrency(totalExpense);
+        document.getElementById('monthlyNet').textContent = formatCurrency(totalIncome - totalExpense);
+
+        // Populate monthly stats list
+        const monthlyStatsList = document.getElementById('monthlyStatsList');
+        monthlyStatsList.innerHTML = '';
+        if (Object.keys(monthlyStats).length === 0) {
+            monthlyStatsList.innerHTML = '<li class="text-muted">이번 달 내역이 없습니다.</li>';
+        } else {
+            for (const [key, value] of Object.entries(monthlyStats)) {
+                monthlyStatsList.innerHTML += `<li>${key}: ${formatCurrency(value)}</li>`;
+            }
+        }
+
+        // Populate category details list
+        const categoryDetailsList = document.getElementById('categoryDetailsList');
+        categoryDetailsList.innerHTML = '';
+        if (Object.keys(categoryDetails).length === 0) {
+            categoryDetailsList.innerHTML = '<li class="text-muted">이번 달 지출 내역이 없습니다.</li>';
+        } else {
+            for (const [key, value] of Object.entries(categoryDetails)) {
+                categoryDetailsList.innerHTML += `<li>${key}: ${formatCurrency(value)}</li>`;
+            }
+        }
     } catch (error) {
         console.error('Error loading monthly data:', error);
     }
 }
 
 
-function displayTransactions(expenses) {
-    const tableBody = document.getElementById('monthlyTableBody');
-    if (!tableBody) return;
-    tableBody.innerHTML = '';
+async function plotChart() {
+    const selectedMonth = document.getElementById('vizMonth').value;
+    const chartType = document.getElementById('vizType').value;
 
-    let totalExpense = 0;
-    let totalIncome = 0;
-
-    expenses.forEach(exp => {
-        const row = tableBody.insertRow();
-        row.innerHTML = `
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
-            <td>
-                <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
-            </td>
-        `;
-
-        if (exp.type === 'income') {
-            totalIncome += exp.amount;
-        } else {
-            totalExpense += exp.amount;
+    if (!selectedMonth) {
+        document.getElementById('no-viz-data').style.display = 'block';
+        if (mainChart) {
+            mainChart.destroy();
         }
+        return;
+    }
+
+    const q = query(
+        collection(db, 'expenses'),
+        where('userId', '==', currentUser.uid),
+        where('month', '==', selectedMonth),
+        where('type', '==', 'expense')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const categoryData = {};
+    querySnapshot.forEach(doc => {
+        const data = doc.data();
+        categoryData[data.category] = (categoryData[data.category] || 0) + data.amount;
     });
 
-    updateSummary(totalIncome, totalExpense);
-    updateCharts(expenses);
-}
+    const labels = Object.keys(categoryData);
+    const data = Object.values(categoryData);
 
-function updateSummary(totalIncome, totalExpense) {
-    const monthlyIncome = document.getElementById('monthlyIncome');
-    const monthlyExpense = document.getElementById('monthlyExpense');
-    const monthlyNet = document.getElementById('monthlyNet');
+    if (labels.length === 0) {
+        document.getElementById('no-viz-data').style.display = 'block';
+        if (mainChart) {
+            mainChart.destroy();
+        }
+        return;
+    }
 
-    if (monthlyIncome) monthlyIncome.textContent = formatCurrency(totalIncome);
-    if (monthlyExpense) monthlyExpense.textContent = formatCurrency(totalExpense);
-    if (monthlyNet) monthlyNet.textContent = formatCurrency(totalIncome - totalExpense);
-}
-
-function updateCharts(expenses) {
-    const expenseData = expenses.filter(exp => exp.type === 'expense');
-    const categorySums = expenseData.reduce((acc, curr) => {
-        acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
-        return acc;
-    }, {});
-
-    const labels = Object.keys(categorySums);
-    const values = Object.values(categorySums);
-
+    document.getElementById('no-viz-data').style.display = 'none';
+    const ctx = document.getElementById('vizChart').getContext('2d');
     if (mainChart) {
         mainChart.destroy();
     }
 
-    if (labels.length === 0) {
-        if (monthlyChartElement) monthlyChartElement.style.display = 'none';
-        if (monthlyChartNoData) monthlyChartNoData.style.display = 'block';
-        return;
-    } else {
-        if (monthlyChartElement) monthlyChartElement.style.display = 'block';
-        if (monthlyChartNoData) monthlyChartNoData.style.display = 'none';
-    }
-
-    const ctx = monthlyChartElement ? monthlyChartElement.getContext('2d') : null;
-    if (!ctx) return;
-
     mainChart = new Chart(ctx, {
-        type: 'pie',
+        type: chartType,
         data: {
             labels: labels,
             datasets: [{
-                label: '지출 카테고리',
-                data: values,
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+                data: data,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED'],
             }]
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+                            return `${context.label}: ${formatCurrency(context.parsed)}`;
                         }
                     }
                 }
@@ -887,226 +1010,230 @@ function updateCharts(expenses) {
     });
 }
 
+// New function to compare expenses
+async function compareExpenses() {
+    const month1 = document.getElementById('compareMonth1').value;
+    const month2 = document.getElementById('compareMonth2').value;
 
-async function plotChart() {
-    if (mainChart) {
-        mainChart.destroy();
-        mainChart = null;
+    if (!month1 || !month2) {
+        document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+        }
+        return;
     }
 
-    const vizMonth = document.getElementById('vizMonth');
-    const vizType = document.getElementById('vizType');
-    const month = vizMonth ? vizMonth.value || getMonthKey(getLocalDate()) : getMonthKey(getLocalDate());
-    const type = vizType ? vizType.value : 'pie';
-    const chartElement = document.getElementById('vizChart');
-    const noDataMessage = document.getElementById('no-viz-data');
-
     try {
-        const q = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', month),
-            where('type', '==', 'expense')
-        );
+        const q = query(collection(db, `users/${currentUser.uid}/transactions`), orderBy('date', 'asc'));
         const querySnapshot = await getDocs(q);
+        const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const categorySums = {};
-        querySnapshot.forEach(doc => {
-            const exp = doc.data();
-            categorySums[exp.category] = (categorySums[exp.category] || 0) + exp.amount;
-        });
+        const expenses1 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month1));
+        const expenses2 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month2));
 
-        const labels = Object.keys(categorySums);
-        const values = Object.values(categorySums);
+        const categories1 = expenses1.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+        const categories2 = expenses2.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
 
-        if (labels.length === 0) {
-            if (chartElement) chartElement.style.display = 'none';
-            if (noDataMessage) noDataMessage.style.display = 'block';
+        const allCategories = [...new Set([...Object.keys(categories1), ...Object.keys(categories2)])];
+
+        const data1 = allCategories.map(cat => categories1[cat] || 0);
+        const data2 = allCategories.map(cat => categories2[cat] || 0);
+
+        if (allCategories.length === 0) {
+            document.getElementById('no-compare-data').style.display = 'block';
+            if (compareChart) {
+                compareChart.destroy();
+            }
             return;
-        } else {
-            if (chartElement) chartElement.style.display = 'block';
-            if (noDataMessage) noDataMessage.style.display = 'none';
         }
 
-        const ctx = chartElement ? chartElement.getContext('2d') : null;
-        if (!ctx) return;
+        document.getElementById('no-compare-data').style.display = 'none';
 
-        mainChart = new Chart(ctx, {
-            type: type,
+        const ctx = document.getElementById('compareChart').getContext('2d');
+        if (compareChart) {
+            compareChart.destroy();
+        }
+
+        compareChart = new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: labels,
+                labels: allCategories,
                 datasets: [{
-                    label: '월별 지출',
-                    data: values,
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+                    label: `${month1} 지출`,
+                    data: data1,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }, {
+                    label: `${month2} 지출`,
+                    data: data2,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${formatCurrency(context.parsed.y)}`;
-                            }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '금액 ($)'
                         }
                     }
                 }
             }
         });
-
     } catch (error) {
-        console.error('Error plotting chart:', error);
-        if (chartElement) chartElement.style.display = 'none';
-        if (noDataMessage) noDataMessage.style.display = 'block';
+        console.error('Error loading comparison chart:', error);
+        document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+        }
     }
 }
 
-async function compareExpenses() {
-    const month1Input = document.getElementById('compareMonth1');
-    const month2Input = document.getElementById('compareMonth2');
-    const comparisonTableBody = document.getElementById('comparisonTableBody');
+// New function to export data to CSV
+async function exportToCsv() {
+    if (!currentUser) {
+        showMessageModal('오류', '로그인이 필요합니다.');
+        return;
+    }
 
-    if (!month1Input || !month2Input || !comparisonTableBody) return;
+    const fromDate = document.getElementById('exportFromDate').value;
+    const toDate = document.getElementById('exportToDate').value;
 
-    const month1 = month1Input.value;
-    const month2 = month2Input.value;
+    let q = collection(db, `users/${currentUser.uid}/transactions`);
 
-    if (!month1 || !month2) return;
-    comparisonTableBody.innerHTML = '';
+    // Apply date filters if they exist
+    if (fromDate && toDate) {
+        q = query(q, where('date', '>=', fromDate), where('date', '<=', toDate), orderBy('date', 'asc'));
+    } else {
+        q = query(q, orderBy('date', 'asc'));
+    }
 
     try {
-        const q1 = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', month1),
-            where('type', '==', 'expense')
-        );
-        const q2 = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', month2),
-            where('type', '==', 'expense')
-        );
+        loadingSpinner.style.display = 'flex';
+        const querySnapshot = await getDocs(q);
 
-        const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        if (querySnapshot.empty) {
+            showMessageModal('내보내기 실패', '선택된 날짜 범위에 데이터가 없습니다.');
+            loadingSpinner.style.display = 'none';
+            return;
+        }
 
-        const expenses1 = {};
-        snapshot1.forEach(doc => {
-            const exp = doc.data();
-            expenses1[exp.category] = (expenses1[exp.category] || 0) + exp.amount;
+        const headers = ['날짜', '유형', '내용', '카테고리', '금액', '결제 수단'];
+        let csvContent = headers.join(',') + '\n';
+
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const row = [
+                `"${data.date}"`,
+                `"${data.type === 'expense' ? '지출' : '수입'}"`,
+                `"${data.description.replace(/"/g, '""')}"`,
+                `"${data.category.replace(/"/g, '""')}"`,
+                `"${data.amount}"`,
+                `"${data.card.replace(/"/g, '""')}"`
+            ];
+            csvContent += row.join(',') + '\n';
         });
 
-        const expenses2 = {};
-        snapshot2.forEach(doc => {
-            const exp = doc.data();
-            expenses2[exp.category] = (expenses2[exp.category] || 0) + exp.amount;
-        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', '가계부_내역.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-        const allCategories = new Set([...Object.keys(expenses1), ...Object.keys(expenses2)]);
-
-        allCategories.forEach(category => {
-            const amount1 = expenses1[category] || 0;
-            const amount2 = expenses2[category] || 0;
-            const difference = amount1 - amount2;
-            const trend = difference > 0 ? '증가 🔼' : (difference < 0 ? '감소 🔽' : '동일 ➖');
-
-            const row = comparisonTableBody.insertRow();
-            row.innerHTML = `
-                <td>${category}</td>
-                <td>${formatCurrency(amount1)}</td>
-                <td>${formatCurrency(amount2)}</td>
-                <td>${formatCurrency(Math.abs(difference))} (${trend})</td>
-            `;
-        });
+        showMessageModal('내보내기 완료', 'CSV 파일 다운로드가 완료되었습니다.');
     } catch (error) {
-        console.error('Error comparing expenses:', error);
+        console.error("Error exporting data: ", error);
+        showMessageModal('오류', '데이터 내보내기 중 오류가 발생했습니다.');
+    } finally {
+        loadingSpinner.style.display = 'none';
     }
 }
 
-function exportCSV() {
-    const table = document.getElementById('monthlyTableBody');
-    if (!table) return;
-
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Add BOM for Korean characters
-    const headers = ["날짜", "유형", "설명", "카테고리", "금액", "결제수단"];
-    csvContent += headers.join(",") + "\r\n";
-
-    const rows = table.querySelectorAll("tr");
-    rows.forEach(row => {
-        const rowData = [];
-        row.querySelectorAll("td:not(:last-child)").forEach(cell => {
-            rowData.push(`"${cell.textContent.replace(/"/g, '""')}"`);
-        });
-        csvContent += rowData.join(",") + "\r\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `가계부_${monthlySelectInput.value}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+// Helper function to show modals
+function showMessageModal(title, body) {
+    const modalTitle = document.getElementById('messageModalTitle');
+    const modalBody = document.getElementById('messageModalBody');
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalBody) modalBody.textContent = body;
+    const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+    modal.show();
 }
 
-// Event Listeners
+// Initial setup
 document.addEventListener('DOMContentLoaded', () => {
+    // Check for user login state on page load
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            showApp();
+            loadUserData();
+        } else {
+            loadingSpinner.style.display = 'none';
+            loginPage.style.display = 'block';
+            appContainer.style.display = 'none';
+        }
+    });
+
+    setupNavigation();
+
+    // Set today's date on add form and view filter
+    const today = getLocalDate();
+    if (document.getElementById('date')) {
+        document.getElementById('date').value = today;
+    }
+
+    // Auth forms event listeners
     if (document.getElementById('loginForm')) document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
-    if (document.getElementById('signupForm')) document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
     if (document.getElementById('googleSignInBtn')) document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+    if (document.getElementById('signupForm')) document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
     if (document.getElementById('logoutBtn')) document.getElementById('logoutBtn').addEventListener('click', logout);
-    if (document.getElementById('showSignupLink')) document.getElementById('showSignupLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelector('.login-card').style.display = 'none';
-        document.getElementById('signup-form').style.display = 'block';
-    });
-    if (document.getElementById('showLoginLink')) document.getElementById('showLoginLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelector('.login-card').style.display = 'block';
-        document.getElementById('signup-form').style.display = 'none';
-    });
-    if (document.getElementById('forgotPasswordLink')) document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        handlePasswordReset();
-    });
+    if (document.getElementById('signupLink')) {
+        document.getElementById('signupLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector('.login-card').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'block';
+        });
+    }
+    if (document.getElementById('loginLink')) {
+        document.getElementById('loginLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('signup-form').style.display = 'none';
+            document.querySelector('.login-card').style.display = 'block';
+        });
+    }
+    if (document.getElementById('forgotPasswordLink')) document.getElementById('forgotPasswordLink').addEventListener('click', handlePasswordReset);
     if (document.getElementById('saveEditBtn')) document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
-    // Initial setups
-    setupNavigation();
-    if (document.getElementById('date')) document.getElementById('date').value = getLocalDate();
-    const monthlySelectInput = document.getElementById('monthly-select');
-    if (monthlySelectInput) {
-        monthlySelectInput.value = new Date().toISOString().slice(0, 7); // Set to current month
-        monthlySelectInput.addEventListener('change', loadMonthlyData);
-
-        // Initial data load when the user logs in
-        loadMonthlyData();
-    }
-
-    // Dark Mode Toggle
-    if (document.getElementById('theme-toggle')) document.getElementById('theme-toggle').addEventListener('click', () => {
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         const isDarkMode = document.body.classList.contains('dark-mode');
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        const icon = document.getElementById('theme-toggle').querySelector('i');
-        icon.classList.toggle('fa-sun', isDarkMode);
-        icon.classList.toggle('fa-moon', !isDarkMode);
     });
 
-    // Apply saved theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
-        const icon = document.getElementById('theme-toggle');
-        if (icon) {
-             const iconElem = icon.querySelector('i');
-             iconElem.classList.add('fa-sun');
-             iconElem.classList.remove('fa-moon');
-        }
     }
+
+    // Expose functions to global scope for onclick attributes in HTML
+    window.openEditModal = openEditModal;
+    window.deleteExpense = deleteExpense;
+    window.showMessageModal = showMessageModal;
 });
