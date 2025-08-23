@@ -441,3 +441,20 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
         display: none; /* Hide user dropdown on small screens */
     }
 }
+
+/*
+    --------------------------------
+    Table & Forms
+    --------------------------------
+*/
+.table {
+    --bs-table-bg: var(--card-bg);
+    --bs-table-striped-bg: var(--table-stripe);
+    --bs-table-hover-bg: var(--table-hover);
+    color: var(--text-color);
+}
+
+.table thead th {
+    color: var(--subtle-text); /* This is the fix for the table header text */
+    font-weight: 600;
+}

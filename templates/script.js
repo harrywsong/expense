@@ -31,6 +31,7 @@ let dashboardChart = null;
 const loadingSpinner = document.getElementById('loading-spinner');
 const loginPage = document.getElementById('login-page');
 const appContainer = document.getElementById('app-container');
+const monthlySelectInput = document.getElementById('monthly-select');
 
 // Authentication functions
 async function handleEmailLogin(e) {
@@ -282,6 +283,30 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Event listeners
+    document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
+    document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+    document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('resetPasswordLink').addEventListener('click', handlePasswordReset);
+    document.getElementById('signupLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector('.login-card').style.display = 'none';
+        document.getElementById('signup-form').style.display = 'block';
+    });
+    document.getElementById('backToLoginLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('signup-form').style.display = 'none';
+        document.querySelector('.login-card').style.display = 'block';
+    });
+
+    // Initial setups
+    setupNavigation();
+    document.getElementById('date').value = getLocalDate();
+    monthlySelectInput.value = new Date().toISOString().slice(0, 7);
+});
+
 function showApp() {
     loadingSpinner.style.display = 'none';
     loginPage.style.display = 'none';
@@ -374,7 +399,7 @@ function setupNavigation() {
             document.getElementById(targetId).classList.add('active');
 
             if (targetId === 'monthly') {
-                showMonthlyExpenses();
+                renderMonthlyData();
             }
             if (targetId === 'viz') {
                 document.getElementById('vizMonth').value = getMonthKey(getLocalDate());
@@ -404,23 +429,6 @@ function setupNavigation() {
     document.getElementById('category').addEventListener('change', handleCategoryChange);
     document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
 
-    // Monthly navigation
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-        const currentDisplay = document.getElementById('currentMonthDisplay').textContent;
-        const [year, month] = currentDisplay.split('-');
-        const newDate = new Date(parseInt(year), parseInt(month) - 2, 1);
-        const newMonthKey = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-        showMonthlyExpenses(newMonthKey);
-    });
-
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-        const currentDisplay = document.getElementById('currentMonthDisplay').textContent;
-        const [year, month] = currentDisplay.split('-');
-        const newDate = new Date(parseInt(year), parseInt(month), 1);
-        const newMonthKey = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-        showMonthlyExpenses(newMonthKey);
-    });
-
     // Chart controls
     document.getElementById('vizMonth').addEventListener('change', plotChart);
     document.getElementById('vizType').addEventListener('change', plotChart);
@@ -431,6 +439,66 @@ function setupNavigation() {
 
     document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
 }
+
+// Function to render monthly data
+async function renderMonthlyData() {
+    const tableBody = document.getElementById('monthlyTableBody');
+    if (!tableBody) return;
+
+    // Get the selected month from the new input
+    const monthKey = monthlySelectInput.value;
+
+    tableBody.innerHTML = '';
+    document.getElementById('currentMonthDisplay').textContent = monthKey;
+
+    try {
+        const q = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', monthKey),
+            orderBy('date', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach(doc => {
+            const exp = doc.data();
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
+            `;
+        });
+    } catch (error) {
+        console.error('Error showing monthly expenses:', error);
+    }
+}
+
+// Event listeners for month navigation
+document.getElementById('prevMonthBtn').addEventListener('click', () => {
+    const currentDate = new Date(monthlySelectInput.value);
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    monthlySelectInput.value = currentDate.toISOString().slice(0, 7);
+    renderMonthlyData();
+});
+
+document.getElementById('nextMonthBtn').addEventListener('click', () => {
+    const currentDate = new Date(monthlySelectInput.value);
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    monthlySelectInput.value = currentDate.toISOString().slice(0, 7);
+    renderMonthlyData();
+});
+
+// Event listener for the new month selection input
+monthlySelectInput.addEventListener('change', () => {
+    renderMonthlyData();
+});
+
+// Initial call to render the current month's data
+renderMonthlyData();
 
 // Utility functions
 function getMonthKey(dateStr) {
@@ -619,7 +687,7 @@ async function addExpense(e) {
         document.getElementById('customCategoryGroup').style.display = 'none';
         renderDashboard();
         refreshTable(); // This line updates "All Transactions"
-        showMonthlyExpenses(); // This line updates "Monthly Breakdown"
+        renderMonthlyData(); // This line updates "Monthly Breakdown"
         showMessage('성공', '항목이 성공적으로 추가되었습니다.');
     } catch (error) {
         console.error('Error adding expense:', error);
@@ -825,40 +893,6 @@ async function populateFilterCategories() {
     }
 }
 
-
-async function showMonthlyExpenses(monthKey = getMonthKey(getLocalDate())) {
-    const tableBody = document.getElementById('monthlyTableBody');
-    if (!tableBody) return;
-
-    tableBody.innerHTML = '';
-    document.getElementById('currentMonthDisplay').textContent = monthKey;
-
-    try {
-        const q = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', monthKey),
-            orderBy('date', 'desc')
-        );
-        const querySnapshot = await getDocs(q);
-
-        querySnapshot.forEach(doc => {
-            const exp = doc.data();
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
-            `;
-        });
-    } catch (error) {
-        console.error('Error showing monthly expenses:', error);
-    }
-}
-
 async function plotChart() {
     if (mainChart) {
         mainChart.destroy();
@@ -897,17 +931,16 @@ async function plotChart() {
             noDataMessage.style.display = 'none';
         }
 
-        const ctx = chartElement;
-        if (!ctx) return;
-
-        const config = {
-            type: type,
+        const ctx = chartElement.getContext('2d');
+        mainChart = new Chart(ctx, {
+            type: type === 'bar' ? 'bar' : 'doughnut',
             data: {
                 labels: labels,
                 datasets: [{
                     label: '지출',
                     data: values,
                     backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+                    hoverOffset: 4
                 }]
             },
             options: {
@@ -924,8 +957,8 @@ async function plotChart() {
                                 if (label) {
                                     label += ': ';
                                 }
-                                if (context.parsed.y !== null) {
-                                    label += formatCurrency(context.parsed.y);
+                                if (context.parsed) {
+                                    label += formatCurrency(context.parsed);
                                 }
                                 return label;
                             }
@@ -933,201 +966,115 @@ async function plotChart() {
                     }
                 }
             }
-        };
-
-        if (type === 'bar') {
-            config.options.scales = {
-                y: {
-                    beginAtZero: true
-                }
-            };
-        }
-
-        mainChart = new Chart(ctx, config);
+        });
     } catch (error) {
         console.error('Error plotting chart:', error);
-        chartElement.style.display = 'none';
-        noDataMessage.style.display = 'block';
     }
 }
 
 async function compareExpenses() {
-    if (mainChart) {
-        mainChart.destroy();
-        mainChart = null;
-    }
-
     const month1 = document.getElementById('compareMonth1').value;
     const month2 = document.getElementById('compareMonth2').value;
-    const chartElement = document.getElementById('compareChart');
-    const noDataMessage = document.getElementById('no-compare-data');
 
-    if (!month1 || !month2) {
-        chartElement.style.display = 'none';
-        noDataMessage.style.display = 'block';
-        return;
-    }
+    const data1 = await getMonthData(month1);
+    const data2 = await getMonthData(month2);
 
-    try {
-        const q1 = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', month1),
-            where('type', '==', 'expense')
-        );
-        const q2 = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', month2),
-            where('type', '==', 'expense')
-        );
-
-        const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-
-        const data1 = {};
-        snapshot1.forEach(doc => {
-            const exp = doc.data();
-            data1[exp.category] = (data1[exp.category] || 0) + exp.amount;
-        });
-
-        const data2 = {};
-        snapshot2.forEach(doc => {
-            const exp = doc.data();
-            data2[exp.category] = (data2[exp.category] || 0) + exp.amount;
-        });
-
-        const allCategories = [...new Set([...Object.keys(data1), ...Object.keys(data2)])];
-        const values1 = allCategories.map(cat => data1[cat] || 0);
-        const values2 = allCategories.map(cat => data2[cat] || 0);
-
-        if (allCategories.length === 0) {
-            chartElement.style.display = 'none';
-            noDataMessage.style.display = 'block';
-            return;
-        } else {
-            chartElement.style.display = 'block';
-            noDataMessage.style.display = 'none';
-        }
-
-        const ctx = chartElement;
-        if (!ctx) return;
-
-        mainChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: allCategories,
-                datasets: [
-                    {
-                        label: month1,
-                        data: values1,
-                        backgroundColor: '#5D5FEF',
-                    },
-                    {
-                        label: month2,
-                        data: values2,
-                        backgroundColor: '#FF6384',
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: false },
-                    y: { stacked: false, beginAtZero: true }
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error comparing expenses:', error);
-        chartElement.style.display = 'none';
-        noDataMessage.style.display = 'block';
-    }
+    renderComparisonTable(data1, data2, month1, month2);
 }
 
-async function exportCSV() {
-    try {
-        const q = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            orderBy('date', 'desc')
-        );
-        const querySnapshot = await getDocs(q);
+async function getMonthData(month) {
+    const q = query(
+        collection(db, 'expenses'),
+        where('userId', '==', currentUser.uid),
+        where('month', '==', month),
+        where('type', '==', 'expense')
+    );
+    const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            showMessage('내보내기 실패', '내보낼 데이터가 없습니다.');
+    const data = {};
+    querySnapshot.forEach(doc => {
+        const exp = doc.data();
+        data[exp.category] = (data[exp.category] || 0) + exp.amount;
+    });
+
+    return data;
+}
+
+function renderComparisonTable(data1, data2, month1, month2) {
+    const tableBody = document.getElementById('comparisonTableBody');
+    tableBody.innerHTML = '';
+
+    const allCategories = new Set([...Object.keys(data1), ...Object.keys(data2)]);
+
+    document.getElementById('compMonth1Header').textContent = month1;
+    document.getElementById('compMonth2Header').textContent = month2;
+
+    let total1 = 0;
+    let total2 = 0;
+
+    allCategories.forEach(category => {
+        const amount1 = data1[category] || 0;
+        const amount2 = data2[category] || 0;
+        const diff = amount2 - amount1;
+        const diffText = diff === 0 ? '-' : formatCurrency(diff);
+        const diffClass = diff > 0 ? 'text-danger' : (diff < 0 ? 'text-success' : '');
+
+        total1 += amount1;
+        total2 += amount2;
+
+        const row = tableBody.insertRow();
+        row.innerHTML = `
+            <td>${category}</td>
+            <td>${formatCurrency(amount1)}</td>
+            <td>${formatCurrency(amount2)}</td>
+            <td class="${diffClass}">${diffText}</td>
+        `;
+    });
+
+    // Add totals row
+    const totalsRow = tableBody.insertRow();
+    totalsRow.innerHTML = `
+        <td class="font-weight-bold">총 지출</td>
+        <td class="font-weight-bold">${formatCurrency(total1)}</td>
+        <td class="font-weight-bold">${formatCurrency(total2)}</td>
+        <td class="font-weight-bold">${formatCurrency(total2 - total1)}</td>
+    `;
+    totalsRow.classList.add('table-primary');
+}
+
+function exportCSV() {
+    refreshTable().then(() => {
+        const table = document.getElementById('expenseTableBody');
+        const rows = table.querySelectorAll('tr');
+
+        if (rows.length === 0) {
+            showMessage('Error', 'No data to export.');
             return;
         }
 
-        let csvContent = "날짜,유형,내용,카테고리,금액,결제수단\n";
-
-        querySnapshot.forEach(doc => {
-            const exp = doc.data();
-            const row = `${exp.date},${exp.type === 'income' ? '수입' : '지출'},"${exp.description.replace(/"/g, '""')}",${exp.category},${exp.amount},${exp.card}\n`;
-            csvContent += row;
+        let csv = "날짜,유형,내용,카테고리,금액,결제 수단\n";
+        rows.forEach(row => {
+            const rowData = Array.from(row.querySelectorAll('td'))
+                .slice(0, 6) // Exclude the action buttons column
+                .map(td => `"${td.textContent.replace(/"/g, '""')}"`)
+                .join(',');
+            csv += rowData + "\n";
         });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "가계부_내역.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showMessage('내보내기 완료', 'CSV 파일이 성공적으로 생성되었습니다.');
-
-    } catch (error) {
-        console.error('Error exporting CSV:', error);
-        showMessage('내보내기 실패', 'CSV 파일 생성 중 오류가 발생했습니다.');
-    }
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "finance_data.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessage('성공', '데이터가 성공적으로 CSV 파일로 내보내졌습니다.');
+        }
+    }).catch(error => {
+        console.error("CSV export error:", error);
+        showMessage('Error', 'Failed to export CSV file.');
+    });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Event listeners
-    document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
-    document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
-    document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    document.getElementById('signupLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelector('.login-card').style.display = 'none';
-        document.getElementById('signup-form').style.display = 'block';
-    });
-    document.getElementById('loginLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelector('.login-card').style.display = 'block';
-        document.getElementById('signup-form').style.display = 'none';
-    });
-    document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        handlePasswordReset();
-    });
-    document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
-
-    // Initial setups
-    setupNavigation();
-    document.getElementById('date').value = getLocalDate();
-
-    // Dark Mode Toggle
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const isDarkMode = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        const icon = document.getElementById('theme-toggle').querySelector('i');
-        icon.classList.toggle('fa-sun', isDarkMode);
-        icon.classList.toggle('fa-moon', !isDarkMode);
-    });
-
-    // Apply saved theme
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-        const icon = document.getElementById('theme-toggle').querySelector('i');
-        icon.classList.add('fa-sun');
-        icon.classList.remove('fa-moon');
-    }
-});
-
-window.openEditModal = openEditModal;
-window.deleteExpense = deleteExpense;
