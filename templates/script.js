@@ -395,7 +395,7 @@ function setupNavigation() {
                 const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 document.getElementById('compareMonth1').value = getMonthKey(getLocalDate());
                 document.getElementById('compareMonth2').value = getMonthKey(prev.toISOString().substring(0, 10));
-                loadComparisonChart(); // Updated function call
+                loadComparisonChart();
             }
             if (targetId === 'view') {
                 refreshTable();
@@ -446,8 +446,8 @@ function setupNavigation() {
     if (document.getElementById('vizType')) document.getElementById('vizType').addEventListener('change', plotChart);
 
     // Compare controls
-    if (document.getElementById('compareMonth1')) document.getElementById('compareMonth1').addEventListener('change', loadComparisonChart); // Updated function call
-    if (document.getElementById('compareMonth2')) document.getElementById('compareMonth2').addEventListener('change', loadComparisonChart); // Updated function call
+    if (document.getElementById('compareMonth1')) document.getElementById('compareMonth1').addEventListener('change', loadComparisonChart);
+    if (document.getElementById('compareMonth2')) document.getElementById('compareMonth2').addEventListener('change', loadComparisonChart);
 
     if (document.getElementById('exportCsvBtn')) document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
 }

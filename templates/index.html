@@ -6,17 +6,14 @@
     <title>가계부</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.com/ajax/libs/font-awesome/6.4.0/css/brands.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
-
 </head>
 <body>
     <div id="loading-spinner" class="loading-overlay">
@@ -25,7 +22,7 @@
         </div>
     </div>
 
-    <div id="login-page" class="login-container" style="display: none;">
+    <div id="login-page" class="login-container">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-6 col-lg-4">
@@ -37,42 +34,28 @@
                             <h1 class="app-title">가계부</h1>
                             <p class="app-subtitle">개인 재정 관리 시스템</p>
                         </div>
-
                         <div class="login-body">
                             <button type="button" class="btn btn-outline-primary btn-block" id="googleSignInBtn">
                                 <i class="fab fa-google me-2"></i> Google로 로그인
                             </button>
-
-                            <div class="divider">
-                                <span>또는</span>
-                            </div>
-
+                            <div class="divider"><span>또는</span></div>
                             <form id="loginForm">
                                 <div class="form-group">
                                     <label for="emailInput" class="form-label">이메일</label>
                                     <div class="input-group">
-                                        <span class="input-icon">
-                                            <i class="fas fa-envelope"></i>
-                                        </span>
+                                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
                                         <input type="email" class="form-control" id="emailInput" required placeholder="이메일을 입력하세요">
                                     </div>
                                 </div>
-
                                 <div class="form-group">
                                     <label for="passwordInput" class="form-label">비밀번호</label>
                                     <div class="input-group">
-                                        <span class="input-icon">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
+                                        <span class="input-icon"><i class="fas fa-lock"></i></span>
                                         <input type="password" class="form-control" id="passwordInput" required placeholder="비밀번호를 입력하세요">
                                     </div>
                                 </div>
-
                                 <div class="login-actions">
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fas fa-sign-in-alt me-2"></i> 로그인
-                                    </button>
-
+                                    <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-sign-in-alt me-2"></i> 로그인</button>
                                     <div class="auth-links">
                                         <a href="#" id="signupLink">계정이 없으신가요? 회원가입</a>
                                         <a href="#" id="forgotPasswordLink">비밀번호를 잊으셨나요?</a>
@@ -81,7 +64,6 @@
                             </form>
                         </div>
                     </div>
-
                     <div class="login-card" id="signup-form" style="display: none;">
                         <div class="login-header">
                             <div class="logo">
@@ -90,44 +72,31 @@
                             <h1 class="app-title">회원가입</h1>
                             <p class="app-subtitle">새 계정을 만드세요</p>
                         </div>
-
                         <div class="login-body">
                             <form id="signupForm">
                                 <div class="form-group">
                                     <label for="signupEmail" class="form-label">이메일</label>
                                     <div class="input-group">
-                                        <span class="input-icon">
-                                            <i class="fas fa-envelope"></i>
-                                        </span>
+                                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
                                         <input type="email" class="form-control" id="signupEmail" required placeholder="이메일을 입력하세요">
                                     </div>
                                 </div>
-
                                 <div class="form-group">
                                     <label for="signupPassword" class="form-label">비밀번호</label>
                                     <div class="input-group">
-                                        <span class="input-icon">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
+                                        <span class="input-icon"><i class="fas fa-lock"></i></span>
                                         <input type="password" class="form-control" id="signupPassword" required placeholder="비밀번호를 입력하세요" minlength="6">
                                     </div>
                                 </div>
-
                                 <div class="form-group">
                                     <label for="confirmPassword" class="form-label">비밀번호 확인</label>
                                     <div class="input-group">
-                                        <span class="input-icon">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
+                                        <span class="input-icon"><i class="fas fa-lock"></i></span>
                                         <input type="password" class="form-control" id="confirmPassword" required placeholder="비밀번호를 다시 입력하세요" minlength="6">
                                     </div>
                                 </div>
-
                                 <div class="login-actions">
-                                    <button type="submit" class="btn btn-primary btn-block">
-                                        <i class="fas fa-user-plus me-2"></i> 회원가입
-                                    </button>
-
+                                    <button type="submit" class="btn btn-success btn-block"><i class="fas fa-user-plus me-2"></i> 회원가입</button>
                                     <div class="auth-links">
                                         <a href="#" id="loginLink">이미 계정이 있으신가요? 로그인</a>
                                     </div>
@@ -140,404 +109,321 @@
         </div>
     </div>
 
-    <div id="app-container" class="d-flex" style="display: none;">
-<div class="sidebar d-flex flex-column flex-shrink-0 p-3">
-    <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-                <i class="fas fa-wallet fs-4 me-2"></i>
-                <span class="fs-4 fw-bold">가계부</span>
-            </a>
-            <hr>
-                        <ul class="nav nav-pills flex-column mb-auto sidebar-nav">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active" data-target="dashboard">
-                        <i class="fas fa-tachometer-alt me-2"></i>
-                        대시보드
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link link-dark" data-target="add">
-                        <i class="fas fa-plus-circle me-2"></i>
-                        항목 추가
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link link-dark" data-target="monthly">
-                        <i class="fas fa-calendar-alt me-2"></i>
-                        월별 내역
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link link-dark" data-target="view">
-                        <i class="fas fa-list-ul me-2"></i>
-                        전체 내역
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#" class="nav-link link-dark" data-target="viz">
-                        <i class="fas fa-chart-pie me-2"></i>
-                        시각화
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link link-dark" data-target="compare">
-                        <i class="fas fa-balance-scale-right me-2"></i>
-                        월별 비교
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link link-dark" data-target="export">
-                        <i class="fas fa-file-export me-2"></i>
-                        데이터 내보내기
-                    </a>
-                </li>
-            </ul>
-            <hr>
-            <div class="mt-auto p-2">
-                <button id="theme-toggle" class="btn btn-outline-primary w-100">
-                    <i class="fas fa-moon me-2"></i> 다크 모드
-                </button>
+    <div id="app-container" class="app-container" style="display: none;">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo"><i class="fas fa-wallet"></i></div>
+                <h2 class="app-title">가계부</h2>
             </div>
-            <hr>
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle me-2 fs-5"></i>
-                    <div>
-                        <small class="fw-bold" id="user-email">사용자</small>
-                        <br>
-                        <small class="text-muted" id="user-id">user-id</small>
-                    </div>
-                </a>
-                <ul class="dropdown-menu text-small shadow">
-                    <li><a class="dropdown-item" href="#" id="logoutBtn">로그아웃</a></li>
-                </ul>
+            <div class="sidebar-nav">
+                <a href="#" class="nav-link active" data-target="dashboard"><i class="fas fa-tachometer-alt"></i> 대시보드</a>
+                <a href="#" class="nav-link" data-target="add"><i class="fas fa-plus-circle"></i> 항목 추가</a>
+                <a href="#" class="nav-link" data-target="view"><i class="fas fa-list"></i> 전체 내역 보기</a>
+                <a href="#" class="nav-link" data-target="monthly"><i class="fas fa-calendar-alt"></i> 월별 내역</a>
+                <a href="#" class="nav-link" data-target="viz"><i class="fas fa-chart-pie"></i> 시각화</a>
+                <a href="#" class="nav-link" data-target="compare"><i class="fas fa-balance-scale"></i> 월별 비교</a>
+                <a href="#" class="nav-link" data-target="export"><i class="fas fa-file-export"></i> 내보내기</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <span id="user-email"></span>
+                    <span id="user-id"></span>
+                </div>
+                <button id="logoutBtn" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt me-2"></i>로그아웃</button>
+                <div class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </div>
             </div>
         </div>
-
-        <div class="main-content flex-grow-1 p-4">
-
+        <div class="main-content">
             <div id="dashboard" class="content-section active">
-                <h1 class="mb-4">대시보드</h1>
-                <div class="row">
-                    <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card text-white bg-success">
+                <h1 class="page-title"><i class="fas fa-tachometer-alt"></i> 대시보드</h1>
+                <div class="row dashboard-cards">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card card-income">
+                            <div class="card-icon"><i class="fas fa-hand-holding-usd"></i></div>
                             <div class="card-body">
-                                <h5 class="card-title">이번 달 수입</h5>
-                                <p class="card-text fs-3" id="dashboard-income">$0</p>
+                                <p class="card-text">이번 달 수입</p>
+                                <h4 class="card-value" id="dashboard-income"></h4>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card text-white bg-danger">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card card-expense">
+                            <div class="card-icon"><i class="fas fa-shopping-cart"></i></div>
                             <div class="card-body">
-                                <h5 class="card-title">이번 달 지출</h5>
-                                <p class="card-text fs-3" id="dashboard-expense">$0</p>
+                                <p class="card-text">이번 달 지출</p>
+                                <h4 class="card-value" id="dashboard-expense"></h4>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card text-white bg-info">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card card-net">
+                            <div class="card-icon"><i class="fas fa-balance-scale-left"></i></div>
                             <div class="card-body">
-                                <h5 class="card-title">지난 달 지출</h5>
-                                <p class="card-text fs-3" id="dashboard-prev-expense">$0</p>
+                                <p class="card-text">순수입</p>
+                                <h4 class="card-value" id="dashboard-net-income"></h4>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card text-white bg-warning">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="card card-prev-expense">
+                            <div class="card-icon"><i class="fas fa-history"></i></div>
                             <div class="card-body">
-                                <h5 class="card-title">순수입</h5>
-                                <p class="card-text fs-3" id="dashboard-net-income">$0</p>
+                                <p class="card-text">지난달 지출</p>
+                                <h4 class="card-value" id="dashboard-prev-expense"></h4>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">이번 달 카테고리별 지출</h5>
-                                <div class="chart-container">
-                                    <canvas id="dashboardChart"></canvas>
-                                </div>
-                                <div class="text-center mt-3" id="no-dashboard-data" style="display: none;">
-                                    <p class="text-muted">이번 달 지출 데이터가 없습니다.</p>
-                                </div>
-                            </div>
-                        </div>
+                <div class="dashboard-chart-container">
+                    <h5 class="chart-title">이번 달 지출 현황</h5>
+                    <canvas id="dashboardChart"></canvas>
+                    <div class="no-data-message" id="no-dashboard-data" style="display: none;">
+                        <p>이 달의 지출 데이터가 없습니다.</p>
                     </div>
                 </div>
             </div>
 
             <div id="add" class="content-section">
-                <h1 class="mb-4">새 항목 추가</h1>
-                <div class="card">
-                    <div class="card-body">
-                        <form id="addForm">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="type" class="form-label">유형</label>
-                                    <select class="form-select" id="type" required>
-                                        <option value="expense">지출</option>
-                                        <option value="income">수입</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="date" class="form-label">날짜</label>
-                                    <input type="date" class="form-control" id="date" required>
-                                </div>
-                                <div class="col-md-12">
-                                    <label for="description" class="form-label">내용</label>
-                                    <input type="text" class="form-control" id="description" required placeholder="예: 점심 식사, 월급">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="category" class="form-label">카테고리</label>
-                                    <select class="form-select" id="category" required>
-                                        <option value="">카테고리 선택</option>
-                                        <option value="그로서리">그로서리</option>
-                                        <option value="외식">외식</option>
-                                        <option value="주유+주차">주유+주차</option>
-                                        <option value="고정비용">고정비용</option>
-                                        <option value="기타">기타</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6" id="customCategoryGroup" style="display: none;">
-                                    <label for="customCategory" class="form-label">카테고리 이름</label>
-                                    <input type="text" class="form-control" id="customCategory" placeholder="카테고리 이름을 입력하세요">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="amount" class="form-label">금액</label>
-                                    <input type="number" step="0.01" class="form-control" id="amount" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="card" class="form-label">결제 수단</label>
-                                    <select class="form-select" id="card" required>
-                                        <option value="">선택</option>
-                                        <option value="TD">TD</option>
-                                        <option value="BMO JH">BMO JH</option>
-                                        <option value="BMO WJ">BMO WJ</option>
-                                        <option value="현금">현금</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 text-center mt-4">
-                                    <button type="submit" class="btn btn-primary">항목 추가</button>
+                <h1 class="page-title"><i class="fas fa-plus-circle"></i> 항목 추가</h1>
+                <div class="form-container">
+                    <form id="addForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="type" class="form-label">유형</label>
+                                <select class="form-select" id="type" required>
+                                    <option value="expense">지출</option>
+                                    <option value="income">수입</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="date" class="form-label">날짜</label>
+                                <input type="date" class="form-control" id="date" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">내용</label>
+                            <input type="text" class="form-control" id="description" required placeholder="예: 스타벅스 커피">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">카테고리</label>
+                                <select class="form-select" id="category" required>
+                                    <option value="그로서리">그로서리</option>
+                                    <option value="외식">외식</option>
+                                    <option value="주유+주차">주유+주차</option>
+                                    <option value="고정비용">고정비용</option>
+                                    <option value="기타">기타 (직접 입력)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" id="customCategoryGroup" style="display: none;">
+                                <label for="customCategory" class="form-label">새 카테고리</label>
+                                <input type="text" class="form-control" id="customCategory" placeholder="예: 문화생활">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="amount" class="form-label">금액 (CAD)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="amount" required step="0.01">
                                 </div>
                             </div>
-                        </form>
-                    </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="card" class="form-label">결제 수단</label>
+                                <select class="form-select" id="card" required>
+                                    <option value="Debit">Debit</option>
+                                    <option value="Credit">Credit</option>
+                                    <option value="Cash">Cash</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i> 항목 추가</button>
+                    </form>
                 </div>
             </div>
 
             <div id="view" class="content-section">
-                <h1 class="mb-4">전체 내역</h1>
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label for="fromDate" class="form-label">시작일</label>
-                                <input type="date" class="form-control" id="fromDate">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="toDate" class="form-label">종료일</label>
-                                <input type="date" class="form-control" id="toDate">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="filterCategory" class="form-label">카테고리</label>
-                                <select class="form-select" id="filterCategory">
-                                    <option value="">전체</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="descSearch" class="form-label">내용 검색</label>
-                                <input type="text" class="form-control" id="descSearch" placeholder="예: 커피">
-                            </div>
+                <h1 class="page-title"><i class="fas fa-list"></i> 전체 내역 보기</h1>
+                <div class="filter-container">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="fromDate" class="form-label">시작일</label>
+                            <input type="date" class="form-control" id="fromDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="toDate" class="form-label">종료일</label>
+                            <input type="date" class="form-control" id="toDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="filterCategory" class="form-label">카테고리</label>
+                            <select class="form-select" id="filterCategory">
+                                <option value="">전체</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="descSearch" class="form-label">내용 검색</label>
+                            <input type="text" class="form-control" id="descSearch" placeholder="내용으로 검색...">
                         </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>날짜</th>
-                                        <th>유형</th>
-                                        <th>내용</th>
-                                        <th>카테고리</th>
-                                        <th>금액</th>
-                                        <th>결제 수단</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="expenseTableBody">
-                                    </tbody>
-                            </table>
-                        </div>
-                        <div class="text-end mt-3">
-                            <p class="mb-0 text-success fw-bold">총 수입: <span id="filteredIncomeTotal">$0</span></p>
-                            <p class="mb-0 text-danger fw-bold">총 지출: <span id="filteredTotal">$0</span></p>
-                        </div>
+                <div class="summary-cards mt-4">
+                    <div class="card card-summary">
+                        <p>총 지출</p>
+                        <h5 id="filteredTotal"></h5>
                     </div>
+                    <div class="card card-summary">
+                        <p>총 수입</p>
+                        <h5 id="filteredIncomeTotal"></h5>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mt-3">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>유형</th>
+                                <th>내용</th>
+                                <th>카테고리</th>
+                                <th>금액</th>
+                                <th>결제 수단</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenseTableBody">
+                            </tbody>
+                    </table>
                 </div>
             </div>
 
             <div id="monthly" class="content-section">
-    <h1 class="mb-4">월별 내역</h1>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <button class="btn btn-outline-secondary" id="prevMonthBtn">
-            <i class="fas fa-chevron-left"></i> 이전 달
-        </button>
-        <div class="d-flex align-items-center">
-            <h2 id="currentMonthDisplay" class="mb-0 me-3">YYYY-MM</h2>
-            <input type="month" id="monthly-select" class="form-control" style="width: 150px;">
-        </div>
-        <button class="btn btn-outline-secondary" id="nextMonthBtn">
-            다음 달 <i class="fas fa-chevron-right"></i>
-        </button>
-    </div>
-    <div class="row mt-4" id="monthly-summary-boxes">
-        <div class="col-md-4 mb-4">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">총 수입</h5>
-                    <p class="card-text fs-3" id="monthlyIncome">$0</p>
+                <h1 class="page-title"><i class="fas fa-calendar-alt"></i> 월별 내역</h1>
+                <div class="d-flex align-items-center mb-3">
+                    <button id="prevMonthBtn" class="btn btn-secondary me-2"><i class="fas fa-chevron-left"></i></button>
+                    <input type="month" id="monthly-select" class="form-control w-auto">
+                    <button id="nextMonthBtn" class="btn btn-secondary ms-2"><i class="fas fa-chevron-right"></i></button>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">총 지출</h5>
-                    <p class="card-text fs-3" id="monthlyExpense">$0</p>
+                <div class="monthly-summary">
+                    <div class="card summary-card">
+                        <p>이번 달 수입</p>
+                        <h5 id="monthlyIncome"></h5>
+                    </div>
+                    <div class="card summary-card">
+                        <p>이번 달 지출</p>
+                        <h5 id="monthlyExpense"></h5>
+                    </div>
+                    <div class="card summary-card">
+                        <p>이번 달 순수입</p>
+                        <h5 id="monthlyNet"></h5>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">순수입/순지출</h5>
-                    <p class="card-text fs-3" id="monthlyNet">$0</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">월별 통계 (Monthly Statistics)</h5>
-                    <ul class="list-unstyled" id="monthlyStatsList">
-                        </ul>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">카테고리별 상세 (Category Details)</h5>
-                    <ul class="list-unstyled" id="categoryDetailsList">
-                        </ul>
-                    <div id="netTotalCheck" class="mt-3"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>날짜</th>
-                            <th>유형</th>
-                            <th>내용</th>
-                            <th>카테고리</th>
-                            <th>금액</th>
-                            <th>결제 수단</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="monthlyTableBody">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-            <div id="viz" class="content-section">
-                <h1 class="mb-4">시각화</h1>
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="vizMonth" class="form-label">월 선택</label>
-                                <input type="month" class="form-control" id="vizMonth">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">월별 통계 (결제 수단)</h5>
                             </div>
-                            <div class="col-md-6">
-                                <label for="vizType" class="form-label">차트 유형</label>
-                                <select class="form-select" id="vizType">
-                                    <option value="pie">파이 차트</option>
-                                    <option value="doughnut">도넛 차트</option>
-                                    <option value="bar">막대 그래프</option>
-                                </select>
+                            <div class="card-body">
+                                <ul class="monthly-stats-list" id="monthlyStatsList">
+                                    </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">카테고리별 지출</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="monthly-stats-list" id="categoryDetailsList">
+                                    </ul>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div style="height: 400px;">
-                            <canvas id="vizChart"></canvas>
+                <div class="table-responsive mt-4">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>유형</th>
+                                <th>내용</th>
+                                <th>카테고리</th>
+                                <th>금액</th>
+                                <th>결제 수단</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monthlyTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="viz" class="content-section">
+                <h1 class="page-title"><i class="fas fa-chart-pie"></i> 지출 시각화</h1>
+                <div class="chart-controls">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="vizMonth" class="form-label">월 선택</label>
+                            <input type="month" class="form-control" id="vizMonth">
                         </div>
-                        <div class="text-center mt-3" id="no-viz-data" style="display: none;">
-                            <p class="text-muted">선택된 월의 지출 데이터가 없습니다.</p>
+                        <div class="col-md-6 mb-3">
+                            <label for="vizType" class="form-label">차트 유형</label>
+                            <select class="form-select" id="vizType">
+                                <option value="pie">원형</option>
+                                <option value="bar">막대</option>
+                            </select>
                         </div>
+                    </div>
+                </div>
+                <div class="chart-container-large">
+                    <canvas id="vizChart"></canvas>
+                    <div class="no-data-message" id="no-viz-data" style="display: none;">
+                        <p>선택된 월에 지출 데이터가 없습니다.</p>
                     </div>
                 </div>
             </div>
 
             <div id="compare" class="content-section">
-                <h1 class="mb-4">월별 비교</h1>
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="compareMonth1" class="form-label">첫 번째 월</label>
-                                <input type="month" class="form-control" id="compareMonth1">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="compareMonth2" class="form-label">두 번째 월</label>
-                                <input type="month" class="form-control" id="compareMonth2">
-                            </div>
+                <h1 class="page-title"><i class="fas fa-balance-scale"></i> 월별 지출 비교</h1>
+                <div class="chart-controls">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="compareMonth1" class="form-label">첫 번째 월</label>
+                            <input type="month" class="form-control" id="compareMonth1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="compareMonth2" class="form-label">두 번째 월</label>
+                            <input type="month" class="form-control" id="compareMonth2">
                         </div>
                     </div>
                 </div>
-                <div class="card">
-                    <div class="card-body">
-                        <div style="height: 400px;">
-                            <canvas id="compareChart"></canvas>
-                        </div>
-                        <div class="text-center mt-3" id="no-compare-data" style="display: none;">
-                            <p class="text-muted">선택된 월의 데이터가 부족합니다.</p>
-                        </div>
+                <div class="chart-container-large">
+                    <canvas id="compareChart"></canvas>
+                    <div class="no-data-message" id="no-compare-data" style="display: none;">
+                        <p>비교할 지출 데이터가 없습니다.</p>
                     </div>
                 </div>
             </div>
 
             <div id="export" class="content-section">
-                <h1 class="mb-4">데이터 내보내기</h1>
-                <div class="card">
-                    <div class="card-body">
-                        <p>모든 재정 내역을 CSV 파일로 내보낼 수 있습니다.</p>
-                        <button id="exportCsvBtn" class="btn btn-primary">
-                            <i class="fas fa-file-csv me-2"></i> CSV로 내보내기
-                        </button>
+                <h1 class="page-title"><i class="fas fa-file-export"></i> CSV로 내보내기</h1>
+                <div class="export-container">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="exportFromDate" class="form-label">시작일</label>
+                            <input type="date" class="form-control" id="exportFromDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="exportToDate" class="form-label">종료일</label>
+                            <input type="date" class="form-control" id="exportToDate">
+                        </div>
                     </div>
+                    <button id="exportCsvBtn" class="btn btn-success"><i class="fas fa-file-download me-2"></i> CSV 다운로드</button>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -545,7 +431,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">항목 수정</h5>
+                    <h5 class="modal-title" id="editModalLabel">항목 편집</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -569,42 +455,38 @@
                         <div class="mb-3">
                             <label for="edit-category" class="form-label">카테고리</label>
                             <select class="form-select" id="edit-category" required>
-                                <option value="">카테고리 선택</option>
                                 <option value="그로서리">그로서리</option>
                                 <option value="외식">외식</option>
                                 <option value="주유+주차">주유+주차</option>
                                 <option value="고정비용">고정비용</option>
-                                <option value="기타">기타</option>
+                                <option value="기타">기타 (직접 입력)</option>
                             </select>
                         </div>
                         <div class="mb-3" id="editCustomCategoryGroup" style="display: none;">
-                            <label for="editCustomCategory" class="form-label">카테고리 이름</label>
-                            <input type="text" class="form-control" id="editCustomCategory" placeholder="카테고리 이름을 입력하세요">
+                            <label for="editCustomCategory" class="form-label">새 카테고리</label>
+                            <input type="text" class="form-control" id="editCustomCategory" placeholder="예: 문화생활">
                         </div>
                         <div class="mb-3">
-                            <label for="edit-amount" class="form-label">금액</label>
-                            <input type="number" step="0.01" class="form-control" id="edit-amount" required>
+                            <label for="edit-amount" class="form-label">금액 (CAD)</label>
+                            <input type="number" class="form-control" id="edit-amount" required step="0.01">
                         </div>
                         <div class="mb-3">
                             <label for="edit-card" class="form-label">결제 수단</label>
                             <select class="form-select" id="edit-card" required>
-                                <option value="">선택</option>
-                                <option value="TD">TD</option>
-                                <option value="BMO JH">BMO JH</option>
-                                <option value="BMO WJ">BMO WJ</option>
-                                <option value="현금">현금</option>
+                                <option value="Debit">Debit</option>
+                                <option value="Credit">Credit</option>
+                                <option value="Cash">Cash</option>
                             </select>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                    <button type="button" class="btn btn-primary" id="saveEditBtn">저장</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" id="saveEditBtn">변경사항 저장</button>
                 </div>
             </div>
         </div>
     </div>
-
 
     <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -613,8 +495,7 @@
                     <h5 class="modal-title" id="messageModalTitle"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="messageModalBody">
-                </div>
+                <div class="modal-body" id="messageModalBody"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">확인</button>
                 </div>
@@ -622,9 +503,9 @@
         </div>
     </div>
 
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script type="module" src="script.js"></script>
+    <script type="module" src="firebase_config.js"></script>
 </body>
 </html>
