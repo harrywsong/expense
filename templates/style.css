@@ -25,6 +25,9 @@
     --input-border: #CED4DA;
     --sidebar-width: 280px;
     --transition-speed: 0.3s;
+    --accent-light: #E3F2FD;
+    --success-light: #E8F5E8;
+    --danger-light: #FFEBEE;
 }
 
 body.dark-mode {
@@ -43,6 +46,9 @@ body.dark-mode {
     --table-hover: #2A3950;
     --input-bg: #2C3E50;
     --input-border: #495057;
+    --accent-light: #1E2A3A;
+    --success-light: #1E3A1E;
+    --danger-light: #3A1E1E;
 }
 
 body {
@@ -299,7 +305,6 @@ body {
     color: var(--subtle-text) !important;
 }
 
-
 /*
     --------------------------------
     Content Sections
@@ -332,11 +337,12 @@ body {
     color: var(--text-color);
     box-shadow: var(--shadow);
     transition: background-color var(--transition-speed), color var(--transition-speed);
+    margin-bottom: 1.5rem;
 }
 
 .card-title {
-    color: var(--subtle-text);
-    font-weight: 500;
+    color: var(--text-color);
+    font-weight: 600;
 }
 
 .card-text.fs-3 {
@@ -371,6 +377,103 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
 
 /*
     --------------------------------
+    Monthly View Enhanced Styling
+    --------------------------------
+*/
+#monthly .content-section h1 {
+    font-weight: 700;
+    color: var(--primary-color);
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+#monthly .bg-light {
+    background-color: var(--accent-light) !important;
+    border: 1px solid var(--border-color);
+}
+
+body.dark-mode #monthly .bg-light {
+    background-color: var(--accent-light) !important;
+    color: var(--text-color) !important;
+}
+
+/* Enhanced monthly summary boxes */
+#monthly-summary-boxes .card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid transparent;
+}
+
+#monthly-summary-boxes .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+#monthly-summary-boxes .card-title {
+    color: white !important;
+    font-size: 1.1rem;
+}
+
+#monthly-summary-boxes .card-text {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced statistics cards */
+#monthlyStatsList, #categoryDetailsList {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#monthlyStatsList li, #categoryDetailsList li {
+    transition: background-color 0.2s ease;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--success-light);
+    border-left: 4px solid var(--primary-color);
+}
+
+body.dark-mode #monthlyStatsList li,
+body.dark-mode #categoryDetailsList li {
+    background-color: var(--accent-light);
+    color: var(--text-color);
+}
+
+#monthlyStatsList li:hover, #categoryDetailsList li:hover {
+    background-color: var(--table-hover);
+    transform: translateX(5px);
+}
+
+/* Enhanced table styling for monthly view */
+#monthly .table-dark {
+    background-color: var(--primary-color) !important;
+}
+
+#monthly .table-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--table-stripe);
+}
+
+#monthly .table-hover tbody tr:hover {
+    background-color: var(--table-hover);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+/* Highlight income rows in monthly table */
+#monthly .text-success.fw-bold {
+    background-color: var(--success-light) !important;
+    border-radius: 4px;
+    padding: 0.25rem;
+}
+
+body.dark-mode #monthly .text-success.fw-bold {
+    background-color: var(--success-light) !important;
+}
+
+/*
+    --------------------------------
     Table & Forms
     --------------------------------
 */
@@ -379,6 +482,12 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
     --bs-table-striped-bg: var(--table-stripe);
     --bs-table-hover-bg: var(--table-hover);
     color: var(--text-color);
+}
+
+.table thead th {
+    color: var(--subtle-text);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .form-control, .form-select {
@@ -391,7 +500,9 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
 
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(var(--primary-color-rgb), 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(93, 95, 239, 0.25);
+    background-color: var(--input-bg);
+    color: var(--text-color);
 }
 
 .btn-primary {
@@ -400,9 +511,33 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
     transition: background-color var(--transition-speed), border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-.btn-primary:hover {
+.btn-primary:hover, .btn-primary:focus {
     background-color: var(--primary-hover);
     border-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(93, 95, 239, 0.3);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/*
+    --------------------------------
+    Enhanced Filter Section
+    --------------------------------
+*/
+.card h6.card-title {
+    color: var(--primary-color);
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
 }
 
 /*
@@ -440,21 +575,57 @@ body.dark-mode .card.bg-warning { background-color: #cc9900 !important; }
     .sidebar .dropdown {
         display: none; /* Hide user dropdown on small screens */
     }
+
+    /* Monthly view mobile optimization */
+    #monthly-summary-boxes .col-md-4 {
+        margin-bottom: 1rem;
+    }
+
+    #monthly .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    #monthly .d-flex.justify-content-between > button {
+        order: 2;
+    }
+
+    #monthly .d-flex.align-items-center {
+        order: 1;
+        justify-content: center;
+    }
 }
 
 /*
     --------------------------------
-    Table & Forms
+    Animation Enhancements
     --------------------------------
 */
-.table {
-    --bs-table-bg: var(--card-bg);
-    --bs-table-striped-bg: var(--table-stripe);
-    --bs-table-hover-bg: var(--table-hover);
-    color: var(--text-color);
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.table thead th {
-    color: var(--subtle-text); /* This is the fix for the table header text */
-    font-weight: 600;
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/*
+    --------------------------------
+    Text Color Fixes for Dark Mode
+    --------------------------------
+*/
+body.dark-mode .text-muted {
+    color: var(--subtle-text) !important;
+}
+
+body.dark-mode .form-text {
+    color: var(--subtle-text) !important;
+}
+
+body.dark-mode .table thead th {
+    color: var(--text-color) !important;
 }
