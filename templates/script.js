@@ -278,7 +278,7 @@ function getFinalEditCategory() {
 }
 
 // Fixed comparison chart function
-function loadComparisonChart() {
+async function loadComparisonChart() {
     const month1 = document.getElementById('compareMonth1').value;
     const month2 = document.getElementById('compareMonth2').value;
 
@@ -286,27 +286,43 @@ function loadComparisonChart() {
         document.getElementById('no-compare-data').style.display = 'block';
         if (compareChart) {
             compareChart.destroy();
+            compareChart = null;
         }
         return;
     }
 
-    // Query the expenses collection with the correct structure
-    const q = query(
-        collection(db, 'expenses'),
-        where('userId', '==', currentUser.uid),
-        orderBy('date', 'asc')
-    );
+    try {
+        // Query all expenses for the user
+        const q = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            orderBy('date', 'asc')
+        );
 
-    getDocs(q).then((querySnapshot) => {
-        const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const querySnapshot = await getDocs(q);
+        const allTransactions = [];
 
-        const expenses1 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month1));
-        const expenses2 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month2));
+        querySnapshot.forEach(doc => {
+            allTransactions.push({ id: doc.id, ...doc.data() });
+        });
 
+        // Filter transactions by month for expenses only
+        const expenses1 = allTransactions.filter(t =>
+            t.type === 'expense' &&
+            t.month === month1 // Use the month field stored in the document
+        );
+
+        const expenses2 = allTransactions.filter(t =>
+            t.type === 'expense' &&
+            t.month === month2 // Use the month field stored in the document
+        );
+
+        // Group by category
         const categories1 = expenses1.reduce((acc, curr) => {
             acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
             return acc;
         }, {});
+
         const categories2 = expenses2.reduce((acc, curr) => {
             acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
             return acc;
@@ -314,18 +330,19 @@ function loadComparisonChart() {
 
         const allCategories = [...new Set([...Object.keys(categories1), ...Object.keys(categories2)])];
 
-        const data1 = allCategories.map(cat => categories1[cat] || 0);
-        const data2 = allCategories.map(cat => categories2[cat] || 0);
-
         if (allCategories.length === 0) {
             document.getElementById('no-compare-data').style.display = 'block';
             if (compareChart) {
                 compareChart.destroy();
+                compareChart = null;
             }
             return;
         }
 
         document.getElementById('no-compare-data').style.display = 'none';
+
+        const data1 = allCategories.map(cat => categories1[cat] || 0);
+        const data2 = allCategories.map(cat => categories2[cat] || 0);
 
         const ctx = document.getElementById('compareChart').getContext('2d');
         if (compareChart) {
@@ -359,12 +376,34 @@ function loadComparisonChart() {
                         title: {
                             display: true,
                             text: '금액 ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
+                            }
                         }
                     }
                 }
             }
         });
-    });
+
+    } catch (error) {
+        console.error('Error loading comparison chart:', error);
+        document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+            compareChart = null;
+        }
+    }
 }
 
 // Navigation setup
@@ -1110,7 +1149,8 @@ async function exportToCsv() {
     try {
         loadingSpinner.style.display = 'flex';
 
-        let q = query(
+        // Query all expenses for the user
+        const q = query(
             collection(db, 'expenses'),
             where('userId', '==', currentUser.uid),
             orderBy('date', 'asc')
@@ -1120,15 +1160,26 @@ async function exportToCsv() {
         let allExpenses = [];
 
         querySnapshot.forEach(doc => {
-            allExpenses.push({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            allExpenses.push({
+                id: doc.id,
+                ...data
+            });
         });
 
+        console.log('Total expenses found:', allExpenses.length);
+
         // Apply date filters if they exist
-        if (exportFromDate && exportToDate) {
-            allExpenses = allExpenses.filter(exp =>
-                exp.date >= exportFromDate && exp.date <= exportToDate
-            );
+        if (exportFromDate || exportToDate) {
+            allExpenses = allExpenses.filter(exp => {
+                const expDate = exp.date;
+                const afterStart = !exportFromDate || expDate >= exportFromDate;
+                const beforeEnd = !exportToDate || expDate <= exportToDate;
+                return afterStart && beforeEnd;
+            });
         }
+
+        console.log('Filtered expenses:', allExpenses.length);
 
         if (allExpenses.length === 0) {
             showMessage('내보내기 실패', '선택된 날짜 범위에 데이터가 없습니다.');
@@ -1136,22 +1187,26 @@ async function exportToCsv() {
             return;
         }
 
+        // Create CSV content with proper UTF-8 BOM for Korean characters
         const headers = ['날짜', '유형', '내용', '카테고리', '금액', '결제 수단'];
-        let csvContent = headers.join(',') + '\n';
+        let csvContent = '\uFEFF' + headers.join(',') + '\n'; // BOM for UTF-8
 
         allExpenses.forEach(data => {
             const row = [
                 `"${data.date}"`,
                 `"${data.type === 'expense' ? '지출' : '수입'}"`,
-                `"${data.description.replace(/"/g, '""')}"`,
-                `"${data.category.replace(/"/g, '""')}"`,
-                `"${data.amount}"`,
-                `"${data.card.replace(/"/g, '""')}"`
+                `"${(data.description || '').replace(/"/g, '""')}"`,
+                `"${(data.category || '').replace(/"/g, '""')}"`,
+                `"${data.amount || 0}"`,
+                `"${(data.card || '').replace(/"/g, '""')}"`
             ];
             csvContent += row.join(',') + '\n';
         });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvContent], {
+            type: 'text/csv;charset=utf-8;'
+        });
+
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
@@ -1160,6 +1215,10 @@ async function exportToCsv() {
         let filename = '가계부_내역';
         if (exportFromDate && exportToDate) {
             filename += `_${exportFromDate}_to_${exportToDate}`;
+        } else if (exportFromDate) {
+            filename += `_from_${exportFromDate}`;
+        } else if (exportToDate) {
+            filename += `_until_${exportToDate}`;
         }
         filename += '.csv';
 
@@ -1169,15 +1228,18 @@ async function exportToCsv() {
         link.click();
         document.body.removeChild(link);
 
-        showMessage('내보내기 완료', 'CSV 파일 다운로드가 완료되었습니다.');
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
+
+        showMessage('내보내기 완료', `${allExpenses.length}개의 항목이 CSV 파일로 다운로드되었습니다.`);
+
     } catch (error) {
         console.error("Error exporting data: ", error);
-        showMessage('오류', '데이터 내보내기 중 오류가 발생했습니다.');
+        showMessage('오류', `데이터 내보내기 중 오류가 발생했습니다: ${error.message}`);
     } finally {
         loadingSpinner.style.display = 'none';
     }
 }
-
 // Helper function to show modals
 function showMessageModal(title, body) {
     const modalTitle = document.getElementById('messageModalTitle');

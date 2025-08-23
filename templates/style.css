@@ -457,7 +457,6 @@ body.dark-mode #categoryDetailsList li {
 
 #monthly .table-hover tbody tr:hover {
     background-color: var(--table-hover);
-    transform: scale(1.01);
     transition: all 0.2s ease;
 }
 
