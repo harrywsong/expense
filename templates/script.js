@@ -26,28 +26,37 @@ import {
 let currentUser = null;
 let mainChart = null;
 let dashboardChart = null;
-let vizChart = null;
-let compareChart = null;
+let compareChart = null; // Added this line to fix the error
 
 // UI elements
 const loadingSpinner = document.getElementById('loading-spinner');
 const loginPage = document.getElementById('login-page');
 const appContainer = document.getElementById('app-container');
-const monthlySelectInput = document.getElementById('monthly-select');
+const monthlyChartElement = document.getElementById('monthlyChart');
+const monthlyChartNoData = document.getElementById('no-monthly-data');
 
 // Authentication functions
 async function handleEmailLogin(e) {
     e.preventDefault();
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
+
     try {
         loadingSpinner.style.display = 'flex';
-        await signInWithEmailAndPassword(auth, email, password);
-        showMessageModal('로그인 성공', '환영합니다!');
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+        showMessage('로그인 성공', '환영합니다!');
     } catch (error) {
-        showMessageModal('로그인 실패', '이메일 또는 비밀번호가 올바르지 않습니다.');
-        console.error("Login failed:", error.code, error.message);
-    } finally {
+        console.error('Login error:', error);
+        let message = '로그인에 실패했습니다.';
+        if (error.code === 'auth/user-not-found') {
+            message = '등록되지 않은 이메일입니다.';
+        } else if (error.code === 'auth/wrong-password') {
+            message = '비밀번호가 올바르지 않습니다.';
+        } else if (error.code === 'auth/invalid-email') {
+            message = '유효하지 않은 이메일 주소입니다.';
+        }
+        showMessage('로그인 실패', message);
         loadingSpinner.style.display = 'none';
     }
 }
@@ -57,24 +66,36 @@ async function handleEmailSignup(e) {
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
+
     if (password !== confirmPassword) {
-        showMessageModal('회원가입 실패', '비밀번호가 일치하지 않습니다.');
+        showMessage('회원가입 실패', '비밀번호가 일치하지 않습니다.');
         return;
     }
+
+    if (password.length < 6) {
+        showMessage('회원가입 실패', '비밀번호는 6자 이상이어야 합니다.');
+        return;
+    }
+
     try {
         loadingSpinner.style.display = 'flex';
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-            email: email,
-            createdAt: new Date()
-        });
-        showMessageModal('회원가입 성공', '성공적으로 가입되었습니다. 로그인해 주세요.');
-        document.getElementById('signup-form').style.display = 'none';
-        document.querySelector('.login-card').style.display = 'block';
+        const userCredential = await createUserWithAndPassword(auth, email, password);
+        currentUser = userCredential.user;
+
+        // Initialize user data in Firestore
+        await initializeUserData(currentUser.uid);
+        showMessage('회원가입 완료', '회원가입이 완료되었습니다. 환영합니다!');
     } catch (error) {
-        showMessageModal('회원가입 실패', '회원가입 중 오류가 발생했습니다: ' + error.message);
-        console.error("Signup failed:", error.code, error.message);
-    } finally {
+        console.error('Signup error:', error);
+        let message = '회원가입에 실패했습니다.';
+        if (error.code === 'auth/email-already-in-use') {
+            message = '이미 등록된 이메일입니다.';
+        } else if (error.code === 'auth/invalid-email') {
+            message = '유효하지 않은 이메일 주소입니다.';
+        } else if (error.code === 'auth/weak-password') {
+            message = '비밀번호가 너무 약합니다.';
+        }
+        showMessage('회원가입 실패', message);
         loadingSpinner.style.display = 'none';
     }
 }
@@ -83,571 +104,1136 @@ async function handleGoogleSignIn() {
     try {
         loadingSpinner.style.display = 'flex';
         const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (!userDocSnap.exists()) {
-            await setDoc(userDocRef, {
-                email: user.email,
-                createdAt: new Date(),
-            });
+        currentUser = result.user;
+
+        // Check if this is a new user and initialize data if needed
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        if (!userDoc.exists()) {
+            await initializeUserData(currentUser.uid);
         }
+
+        showMessage('로그인 성공', 'Google 계정으로 로그인되었습니다.');
     } catch (error) {
-        showMessageModal('로그인 실패', 'Google 로그인 중 오류가 발생했습니다: ' + error.message);
-        console.error("Google sign-in failed:", error.code, error.message);
-    } finally {
+        console.error('Google sign-in error:', error);
+        let message = 'Google 로그인에 실패했습니다.';
+        if (error.code === 'auth/popup-closed-by-user') {
+            message = '로그인이 취소되었습니다.';
+        } else if (error.code === 'auth/popup-blocked') {
+            message = '팝업이 차단되었습니다. 팝업을 허용해주세요.';
+        }
+        showMessage('로그인 실패', message);
         loadingSpinner.style.display = 'none';
     }
 }
 
-async function handleLogout() {
+async function handlePasswordReset() {
+    const email = document.getElementById('emailInput').value;
+    if (!email) {
+        showMessage('오류', '이메일을 입력해주세요.');
+        return;
+    }
+
+    try {
+        await sendPasswordResetEmail(auth, email);
+        showMessage('비밀번호 재설정', '비밀번호 재설정 이메일이 발송되었습니다.');
+    } catch (error) {
+        console.error('Password reset error:', error);
+        showMessage('오류', '비밀번호 재설정 이메일 발송에 실패했습니다.');
+    }
+}
+
+async function initializeUserData(uid) {
+    try {
+        // Create user profile
+        await setDoc(doc(db, 'users', uid), {
+            email: currentUser.email,
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error initializing user data:', error);
+    }
+}
+
+
+async function logout() {
     try {
         await signOut(auth);
-        showMessageModal('로그아웃', '성공적으로 로그아웃되었습니다.');
-    } catch (error) {
-        showMessageModal('로그아웃 실패', '로그아웃 중 오류가 발생했습니다.');
-        console.error("Logout failed:", error.message);
-    }
-}
+        currentUser = null;
 
-async function handlePasswordReset() {
-    const email = prompt("비밀번호를 재설정할 이메일 주소를 입력하세요:");
-    if (email) {
-        try {
-            await sendPasswordResetEmail(auth, email);
-            showMessageModal('비밀번호 재설정 이메일 전송', '비밀번호 재설정 링크가 이메일로 전송되었습니다.');
-        } catch (error) {
-            showMessageModal('오류', '이메일 전송 중 오류가 발생했습니다: ' + error.message);
-            console.error("Password reset failed:", error.message);
+        // Reset UI
+        appContainer.style.display = 'none';
+        loginPage.style.display = 'block';
+
+        // Reset forms
+        document.getElementById('loginForm').reset();
+        document.getElementById('signupForm').reset();
+
+        // Show login form, hide signup form
+        document.querySelector('.login-card').style.display = 'block';
+        document.getElementById('signup-form').style.display = 'none';
+
+        // Destroy charts
+        if (mainChart) {
+            mainChart.destroy();
+            mainChart = null;
         }
-    }
-}
-
-function showMessageModal(title, body) {
-    document.getElementById('messageModalTitle').textContent = title;
-    document.getElementById('messageModalBody').textContent = body;
-    const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
-    messageModal.show();
-}
-
-// Data handling functions
-async function addExpense(e) {
-    e.preventDefault();
-    const type = document.getElementById('type').value;
-    const date = document.getElementById('date').value;
-    const description = document.getElementById('description').value;
-    const category = document.getElementById('category').value;
-    const amount = parseFloat(document.getElementById('amount').value);
-    const card = document.getElementById('card').value;
-    if (!currentUser) return;
-    try {
-        await addDoc(collection(db, `users/${currentUser.uid}/expenses`), {
-            type,
-            date,
-            description,
-            category,
-            amount,
-            card,
-            timestamp: new Date()
-        });
-        showMessageModal('성공', '항목이 성공적으로 추가되었습니다.');
-        document.getElementById('addForm').reset();
+        if (dashboardChart) {
+            dashboardChart.destroy();
+            dashboardChart = null;
+        }
+        if (compareChart) {
+            compareChart.destroy();
+            compareChart = null;
+        }
     } catch (error) {
-        showMessageModal('오류', '항목 추가 중 오류가 발생했습니다: ' + error.message);
-        console.error("Error adding document: ", error);
+        console.error('Logout error:', error);
     }
 }
 
-async function fetchExpenses(userId, dateRange = null) {
-    const expensesRef = collection(db, `users/${userId}/expenses`);
-    let q = query(expensesRef, orderBy("date", "desc"));
-    if (dateRange) {
-        q = query(expensesRef, where("date", ">=", dateRange.start), where("date", "<=", dateRange.end), orderBy("date", "desc"));
+// Auth state observer
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        showApp();
+        loadUserData();
+    } else {
+        currentUser = null;
+        loadingSpinner.style.display = 'none';
+        loginPage.style.display = 'block';
+        appContainer.style.display = 'none';
     }
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+});
+
+function showApp() {
+    loadingSpinner.style.display = 'none';
+    loginPage.style.display = 'none';
+    appContainer.style.display = 'flex';
+
+    // Update user info in sidebar
+    document.getElementById('user-email').textContent = currentUser.email;
+    document.getElementById('user-id').textContent = currentUser.uid.substring(0, 8) + '...';
+
+    // Wait for elements to be visible before rendering dashboard
+    setTimeout(() => {
+        renderDashboard();
+        populateFilterCategories();
+    }, 200);
 }
 
-async function loadDashboardData() {
-    if (!currentUser) return;
-    const today = new Date();
-    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-    const currentMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
-    const expenses = await fetchExpenses(currentUser.uid, { start: currentMonthStart, end: currentMonthEnd });
+async function loadUserData() {
+    // Update user's last login
+    try {
+        await setDoc(doc(db, 'users', currentUser.uid), {
+            lastLogin: new Date().toISOString()
+        }, { merge: true });
+    } catch (error) {
+        console.error('Error updating last login:', error);
+    }
+}
 
-    let income = 0;
-    let expense = 0;
-    const categoryTotals = {};
+// Handle custom category visibility
+function handleCategoryChange() {
+    const categorySelect = document.getElementById('category');
+    const customCategoryGroup = document.getElementById('customCategoryGroup');
 
-    expenses.forEach(item => {
-        if (item.type === 'income') {
-            income += item.amount;
-        } else {
-            expense += item.amount;
-            if (categoryTotals[item.category]) {
-                categoryTotals[item.category] += item.amount;
-            } else {
-                categoryTotals[item.category] = item.amount;
+    if (categorySelect.value === '기타') {
+        customCategoryGroup.style.display = 'block';
+        document.getElementById('customCategory').required = true;
+    } else {
+        customCategoryGroup.style.display = 'none';
+        document.getElementById('customCategory').required = false;
+        document.getElementById('customCategory').value = '';
+    }
+}
+
+// Handle edit modal category change
+function handleEditCategoryChange() {
+    const categorySelect = document.getElementById('edit-category');
+    const customCategoryGroup = document.getElementById('editCustomCategoryGroup');
+
+    if (categorySelect.value === '기타') {
+        customCategoryGroup.style.display = 'block';
+        document.getElementById('editCustomCategory').required = true;
+    } else {
+        customCategoryGroup.style.display = 'none';
+        document.getElementById('editCustomCategory').required = false;
+        document.getElementById('editCustomCategory').value = '';
+    }
+}
+
+// Get final category value (handles custom category logic)
+function getFinalCategory() {
+    const categorySelect = document.getElementById('category');
+    if (categorySelect.value === '기타') {
+        return document.getElementById('customCategory').value.trim();
+    }
+    return categorySelect.value;
+}
+
+// Get final category value for edit modal
+function getFinalEditCategory() {
+    const categorySelect = document.getElementById('edit-category');
+    if (categorySelect.value === '기타') {
+        return document.getElementById('editCustomCategory').value.trim();
+    }
+    return categorySelect.value;
+}
+
+function loadComparisonChart() {
+    const month1 = document.getElementById('compareMonth1').value;
+    const month2 = document.getElementById('compareMonth2').value;
+
+    if (!month1 || !month2) {
+        document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+        }
+        return;
+    }
+
+    const q = query(collection(db, `users/${currentUser.uid}/transactions`), orderBy('date', 'asc'));
+    getDocs(q).then((querySnapshot) => {
+        const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const expenses1 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month1));
+        const expenses2 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month2));
+
+        const categories1 = expenses1.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+        const categories2 = expenses2.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+
+        const allCategories = [...new Set([...Object.keys(categories1), ...Object.keys(categories2)])];
+
+        const data1 = allCategories.map(cat => categories1[cat] || 0);
+        const data2 = allCategories.map(cat => categories2[cat] || 0);
+
+        if (allCategories.length === 0) {
+            document.getElementById('no-compare-data').style.display = 'block';
+            if (compareChart) {
+                compareChart.destroy();
             }
+            return;
+        }
+
+        document.getElementById('no-compare-data').style.display = 'none';
+
+        const ctx = document.getElementById('compareChart').getContext('2d');
+        if (compareChart) {
+            compareChart.destroy();
+        }
+
+        compareChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: allCategories,
+                datasets: [{
+                    label: `${month1} 지출`,
+                    data: data1,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }, {
+                    label: `${month2} 지출`,
+                    data: data2,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '금액 ($)'
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
+
+// Navigation setup
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('data-target');
+
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(targetId).classList.add('active');
+
+            if (targetId === 'monthly') {
+                const monthlySelectInput = document.getElementById('monthly-select');
+                if (monthlySelectInput) {
+                    monthlySelectInput.value = new Date().toISOString().slice(0, 7);
+                    loadMonthlyData();
+                }
+            }
+            if (targetId === 'viz') {
+                document.getElementById('vizMonth').value = getMonthKey(getLocalDate());
+                plotChart();
+            }
+            if (targetId === 'compare') {
+                const now = new Date();
+                const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                document.getElementById('compareMonth1').value = getMonthKey(getLocalDate());
+                document.getElementById('compareMonth2').value = getMonthKey(prev.toISOString().substring(0, 10));
+                loadComparisonChart();
+            }
+            if (targetId === 'view') {
+                refreshTable();
+            }
+        });
+    });
+
+    // Form submissions and filters
+    if (document.getElementById('addForm')) document.getElementById('addForm').addEventListener('submit', addExpense);
+    if (document.getElementById('fromDate')) document.getElementById('fromDate').addEventListener('change', refreshTable);
+    if (document.getElementById('toDate')) document.getElementById('toDate').addEventListener('change', refreshTable);
+    if (document.getElementById('filterCategory')) document.getElementById('filterCategory').addEventListener('change', refreshTable);
+    if (document.getElementById('descSearch')) document.getElementById('descSearch').addEventListener('input', refreshTable);
+
+    // Category change handlers
+    if (document.getElementById('category')) document.getElementById('category').addEventListener('change', handleCategoryChange);
+    if (document.getElementById('edit-category')) document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
+
+    // Monthly navigation:
+    if (document.getElementById('prevMonthBtn')) {
+        document.getElementById('prevMonthBtn').addEventListener('click', () => {
+            const monthlySelectInput = document.getElementById('monthly-select');
+            if (monthlySelectInput) {
+                const [year, month] = monthlySelectInput.value.split('-').map(Number);
+                const newDate = new Date(year, month - 2); // Go back one month
+                const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+                monthlySelectInput.value = newMonth;
+                loadMonthlyData();
+            }
+        });
+    }
+
+    if (document.getElementById('nextMonthBtn')) {
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            const monthlySelectInput = document.getElementById('monthly-select');
+            if (monthlySelectInput) {
+                const [year, month] = monthlySelectInput.value.split('-').map(Number);
+                const newDate = new Date(year, month); // Go forward one month
+                const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+                monthlySelectInput.value = newMonth;
+                loadMonthlyData();
+            }
+        });
+    }
+
+    // Chart controls
+    if (document.getElementById('vizMonth')) document.getElementById('vizMonth').addEventListener('change', plotChart);
+    if (document.getElementById('vizType')) document.getElementById('vizType').addEventListener('change', plotChart);
+
+    // Compare controls
+    if (document.getElementById('compareMonth1')) document.getElementById('compareMonth1').addEventListener('change', loadComparisonChart);
+    if (document.getElementById('compareMonth2')) document.getElementById('compareMonth2').addEventListener('change', loadComparisonChart);
+
+    if (document.getElementById('exportCsvBtn')) document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
+}
+
+// Utility functions
+function getMonthKey(dateStr) {
+    return dateStr.substring(0, 7);
+}
+
+function getLocalDate() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-CA', {
+        style: 'currency',
+        currency: 'CAD'
+    }).format(amount);
+}
+
+function showMessage(title, body) {
+    document.getElementById('messageModalTitle').textContent = title;
+    document.getElementById('messageModalBody').innerHTML = body;
+    new bootstrap.Modal(document.getElementById('messageModal')).show();
+}
+
+// Dashboard rendering
+async function renderDashboard() {
+    const now = new Date();
+    const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+    try {
+        // Get current month expenses
+        const thisMonthQuery = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', thisMonthKey)
+        );
+        const thisMonthSnapshot = await getDocs(thisMonthQuery);
+
+        // Get last month expenses
+        const lastMonthQuery = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', lastMonthKey)
+        );
+        const lastMonthSnapshot = await getDocs(lastMonthQuery);
+
+        let incomeThisMonth = 0;
+        let expenseThisMonth = 0;
+        let expenseLastMonth = 0;
+        const expensesThisMonth = [];
+
+        thisMonthSnapshot.forEach(doc => {
+            const expense = doc.data();
+            expensesThisMonth.push({ id: doc.id, ...expense });
+            if (expense.type === 'income') {
+                incomeThisMonth += expense.amount;
+            } else {
+                expenseThisMonth += expense.amount;
+            }
+        });
+
+        lastMonthSnapshot.forEach(doc => {
+            const expense = doc.data();
+            if (expense.type === 'expense') {
+                expenseLastMonth += expense.amount;
+            }
+        });
+
+        // Update dashboard values
+        const incomeEl = document.getElementById('dashboard-income');
+        const expenseEl = document.getElementById('dashboard-expense');
+        const prevExpenseEl = document.getElementById('dashboard-prev-expense');
+        const netIncomeEl = document.getElementById('dashboard-net-income');
+
+        if (incomeEl) incomeEl.textContent = formatCurrency(incomeThisMonth);
+        if (expenseEl) expenseEl.textContent = formatCurrency(expenseThisMonth);
+        if (prevExpenseEl) prevExpenseEl.textContent = formatCurrency(expenseLastMonth);
+        if (netIncomeEl) netIncomeEl.textContent = formatCurrency(incomeThisMonth - expenseThisMonth);
+
+        // Plot dashboard chart
+        const chartElement = document.getElementById('dashboardChart');
+        if (chartElement) {
+            plotDashboardChart(expensesThisMonth);
+        }
+
+    } catch (error) {
+        console.error('Error rendering dashboard:', error);
+    }
+}
+
+function plotDashboardChart(data) {
+    if (dashboardChart) {
+        dashboardChart.destroy();
+        dashboardChart = null;
+    }
+
+    const categorySums = {};
+    data.forEach(exp => {
+        if (exp.type === 'expense') {
+            categorySums[exp.category] = (categorySums[exp.category] || 0) + exp.amount;
         }
     });
 
-    document.getElementById('dashboard-income').textContent = `$${income.toFixed(2)}`;
-    document.getElementById('dashboard-expense').textContent = `$${expense.toFixed(2)}`;
-    document.getElementById('dashboard-net-income').textContent = `$${(income - expense).toFixed(2)}`;
+    const labels = Object.keys(categorySums);
+    const values = Object.values(categorySums);
 
-    const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const prevMonthStart = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1).toISOString().slice(0, 10);
-    const prevMonthEnd = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).toISOString().slice(0, 10);
-    const prevExpenses = await fetchExpenses(currentUser.uid, { start: prevMonthStart, end: prevMonthEnd });
-    const prevTotalExpense = prevExpenses.filter(item => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0);
-    document.getElementById('dashboard-prev-expense').textContent = `$${prevTotalExpense.toFixed(2)}`;
+    // If no data, show empty chart
+    if (labels.length === 0) {
+        if (document.getElementById('dashboardChart')) document.getElementById('dashboardChart').style.display = 'none';
+        if (document.getElementById('no-dashboard-data')) document.getElementById('no-dashboard-data').style.display = 'block';
+        return;
+    } else {
+        if (document.getElementById('dashboardChart')) document.getElementById('dashboardChart').style.display = 'block';
+        if (document.getElementById('no-dashboard-data')) document.getElementById('no-dashboard-data').style.display = 'none';
+    }
 
-    updateDashboardChart(categoryTotals);
+    const ctx = document.getElementById('dashboardChart');
+    if (!ctx) return;
+
+    try {
+        dashboardChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '지출',
+                    data: values,
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${formatCurrency(context.parsed.y)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true, // This is the fix for the vertical stretch
+                        ticks: {
+                            callback: function(value, index, ticks) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Chart initialization error:', error);
+    }
 }
 
-function updateDashboardChart(categoryTotals) {
-    if (dashboardChart) {
-        dashboardChart.destroy();
-    }
-    const ctx = document.getElementById('dashboardChart').getContext('2d');
-    const categories = Object.keys(categoryTotals);
-    const data = Object.values(categoryTotals);
-
-    if (data.length === 0) {
-        document.getElementById('no-dashboard-data').style.display = 'block';
+// Data management functions
+async function addExpense(e) {
+    e.preventDefault();
+    const finalCategory = getFinalCategory();
+    if (!finalCategory) {
+        showMessage('Error', 'Please enter a category.');
         return;
     }
-    document.getElementById('no-dashboard-data').style.display = 'none';
+    const newExpense = {
+        userId: currentUser.uid,
+        type: document.getElementById('type').value,
+        date: document.getElementById('date').value || getLocalDate(),
+        description: document.getElementById('description').value,
+        category: finalCategory,
+        amount: parseFloat(document.getElementById('amount').value),
+        card: document.getElementById('card').value,
+        month: getMonthKey(document.getElementById('date').value || getLocalDate()),
+        timestamp: new Date().toISOString()
+    };
+    try {
+        await addDoc(collection(db, 'expenses'), newExpense);
+        document.getElementById('addForm').reset();
+        document.getElementById('date').value = getLocalDate();
+        document.getElementById('customCategoryGroup').style.display = 'none';
+        renderDashboard();
+        refreshTable(); // This line updates "All Transactions"
+        loadMonthlyData(); // This line updates "Monthly Breakdown"
+        showMessage('성공', '항목이 성공적으로 추가되었습니다.');
+    } catch (error) {
+        console.error('Error adding expense:', error);
+        showMessage('Error', 'Failed to add item.');
+    }
+}
+async function getFilteredExpenses() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const filterCategory = document.getElementById('filterCategory').value;
+    const descSearch = document.getElementById('descSearch').value.toLowerCase();
 
-    dashboardChart = new Chart(ctx, {
-        type: 'doughnut',
+    try {
+        let q = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            orderBy('date', 'desc')
+        );
+
+        const querySnapshot = await getDocs(q);
+        let allExpenses = [];
+
+        querySnapshot.forEach(doc => {
+            allExpenses.push({ id: doc.id, ...doc.data() });
+        });
+
+        return allExpenses.filter(exp => {
+            const dateMatch = (!fromDate || exp.date >= fromDate) && (!toDate || exp.date <= toDate);
+            const categoryMatch = (!filterCategory || exp.category === filterCategory);
+            const descMatch = (!descSearch || exp.description.toLowerCase().includes(descSearch));
+            return dateMatch && categoryMatch && descMatch;
+        });
+    } catch (error) {
+        console.error('Error getting filtered expenses:', error);
+        return [];
+    }
+}
+
+async function refreshTable() {
+    const tableBody = document.getElementById('expenseTableBody');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '';
+    const filteredExpenses = await getFilteredExpenses();
+    let totalExpense = 0;
+    let totalIncome = 0;
+
+    filteredExpenses.forEach(exp => {
+        const row = tableBody.insertRow();
+        row.innerHTML = `
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        `;
+
+        if (exp.type === 'income') {
+            totalIncome += exp.amount;
+        } else {
+            totalExpense += exp.amount;
+        }
+    });
+
+    const totalEl = document.getElementById('filteredTotal');
+    const incomeEl = document.getElementById('filteredIncomeTotal');
+    if (totalEl) totalEl.textContent = formatCurrency(totalExpense);
+    if (incomeEl) incomeEl.textContent = formatCurrency(totalIncome);
+}
+
+async function openEditModal(expenseId) {
+    try {
+        const docRef = doc(db, 'expenses', expenseId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+            showMessage('오류', '항목을 찾을 수 없습니다.');
+            return;
+        }
+
+        const expenseToEdit = docSnap.data();
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
+        document.getElementById('edit-id').value = expenseId;
+        document.getElementById('edit-type').value = expenseToEdit.type;
+        document.getElementById('edit-date').value = expenseToEdit.date;
+        document.getElementById('edit-description').value = expenseToEdit.description;
+
+        // Handle category display in edit modal
+        const predefinedCategories = ['그로서리', '외식', '주유+주차', '고정비용'];
+        const categorySelect = document.getElementById('edit-category');
+
+        if (predefinedCategories.includes(expenseToEdit.category)) {
+            categorySelect.value = expenseToEdit.category;
+            document.getElementById('editCustomCategoryGroup').style.display = 'none';
+        } else {
+            categorySelect.value = '기타';
+            document.getElementById('editCustomCategoryGroup').style.display = 'block';
+            document.getElementById('editCustomCategory').value = expenseToEdit.category;
+        }
+
+        document.getElementById('edit-amount').value = expenseToEdit.amount;
+        document.getElementById('edit-card').value = expenseToEdit.card;
+
+        editModal.show();
+    } catch (error) {
+        console.error('Error opening edit modal:', error);
+        showMessage('오류', '항목 편집을 열 수 없습니다.');
+    }
+}
+
+async function saveEdit() {
+    const expenseId = document.getElementById('edit-id').value;
+    const finalCategory = getFinalEditCategory();
+
+    if (!finalCategory) {
+        showMessage('오류', '카테고리를 입력해주세요.');
+        return;
+    }
+
+    const updatedExpense = {
+        type: document.getElementById('edit-type').value,
+        date: document.getElementById('edit-date').value,
+        description: document.getElementById('edit-description').value,
+        category: finalCategory,
+        amount: parseInt(document.getElementById('edit-amount').value),
+        card: document.getElementById('edit-card').value,
+        month: getMonthKey(document.getElementById('edit-date').value)
+    };
+
+    try {
+        await updateDoc(doc(db, 'expenses', expenseId), updatedExpense);
+
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+        renderDashboard();
+        refreshTable();
+        populateFilterCategories();
+        loadMonthlyData(); // Update monthly data after edit
+        showMessage('성공', '항목이 성공적으로 수정되었습니다.');
+    } catch (error) {
+        console.error('Error updating expense:', error);
+        showMessage('오류', '항목 수정에 실패했습니다.');
+    }
+}
+
+async function deleteExpense(expenseId) {
+    if (!confirm('정말로 이 항목을 삭제하시겠습니까?')) return;
+
+    try {
+        await deleteDoc(doc(db, 'expenses', expenseId));
+
+        renderDashboard();
+        refreshTable();
+        populateFilterCategories();
+        loadMonthlyData(); // Update monthly data after delete
+        showMessage('성공', '항목이 성공적으로 삭제되었습니다.');
+    } catch (error) {
+        console.error('Error deleting expense:', error);
+        showMessage('오류', '항목 삭제에 실패했습니다.');
+    }
+}
+
+async function populateFilterCategories() {
+    const select = document.getElementById('filterCategory');
+    if (!select) return;
+
+    try {
+        // Define the fixed categories you want to include
+        const fixedCategories = new Set([
+            '그로서리',
+            '외식',
+            '주유+주차',
+            '고정비용'
+        ]);
+
+        const q = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('type', '==', 'expense')
+        );
+        const querySnapshot = await getDocs(q);
+
+        // Add categories from Firestore to the set
+        querySnapshot.forEach(doc => {
+            fixedCategories.add(doc.data().category);
+        });
+
+        // Clear existing options
+        select.innerHTML = '<option value="">전체</option>';
+
+        // Convert the set to an array, sort it, and populate the dropdown
+        Array.from(fixedCategories).sort().forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error populating categories:', error);
+    }
+}
+
+// New function to load and display data for the selected month
+async function loadMonthlyData() {
+    const selectedMonthInput = document.getElementById('monthly-select');
+    if (!selectedMonthInput) return;
+
+    const selectedMonth = selectedMonthInput.value;
+    if (!selectedMonth) return;
+
+    document.getElementById('currentMonthDisplay').textContent = selectedMonth;
+
+    try {
+        const q = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            where('month', '==', selectedMonth),
+            orderBy('date', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+        const expenses = [];
+        let totalIncome = 0;
+        let totalExpense = 0;
+        const monthlyStats = {};
+        const categoryDetails = {};
+
+        querySnapshot.forEach(doc => {
+            const expense = { id: doc.id, ...doc.data() };
+            expenses.push(expense);
+
+            if (expense.type === 'income') {
+                totalIncome += expense.amount;
+            } else {
+                totalExpense += expense.amount;
+            }
+
+            // Aggregate monthly stats
+            const card = expense.card || '현금';
+            monthlyStats[card] = (monthlyStats[card] || 0) + expense.amount;
+
+            // Aggregate category details
+            if (expense.type === 'expense') {
+                const category = expense.category || '기타';
+                categoryDetails[category] = (categoryDetails[category] || 0) + expense.amount;
+            }
+        });
+
+        const tableBody = document.getElementById('monthlyTableBody');
+        tableBody.innerHTML = '';
+        expenses.forEach(exp => {
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
+                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            `;
+        });
+
+        // Update monthly summary boxes
+        document.getElementById('monthlyIncome').textContent = formatCurrency(totalIncome);
+        document.getElementById('monthlyExpense').textContent = formatCurrency(totalExpense);
+        document.getElementById('monthlyNet').textContent = formatCurrency(totalIncome - totalExpense);
+
+        // Populate monthly stats list
+        const monthlyStatsList = document.getElementById('monthlyStatsList');
+        monthlyStatsList.innerHTML = '';
+        if (Object.keys(monthlyStats).length === 0) {
+            monthlyStatsList.innerHTML = '<li class="text-muted">이번 달 내역이 없습니다.</li>';
+        } else {
+            for (const [key, value] of Object.entries(monthlyStats)) {
+                monthlyStatsList.innerHTML += `<li>${key}: ${formatCurrency(value)}</li>`;
+            }
+        }
+
+        // Populate category details list
+        const categoryDetailsList = document.getElementById('categoryDetailsList');
+        categoryDetailsList.innerHTML = '';
+        if (Object.keys(categoryDetails).length === 0) {
+            categoryDetailsList.innerHTML = '<li class="text-muted">이번 달 지출 내역이 없습니다.</li>';
+        } else {
+            for (const [key, value] of Object.entries(categoryDetails)) {
+                categoryDetailsList.innerHTML += `<li>${key}: ${formatCurrency(value)}</li>`;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading monthly data:', error);
+    }
+}
+
+
+async function plotChart() {
+    const selectedMonth = document.getElementById('vizMonth').value;
+    const chartType = document.getElementById('vizType').value;
+
+    if (!selectedMonth) {
+        document.getElementById('no-viz-data').style.display = 'block';
+        if (mainChart) {
+            mainChart.destroy();
+        }
+        return;
+    }
+
+    const q = query(
+        collection(db, 'expenses'),
+        where('userId', '==', currentUser.uid),
+        where('month', '==', selectedMonth),
+        where('type', '==', 'expense')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const categoryData = {};
+    querySnapshot.forEach(doc => {
+        const data = doc.data();
+        categoryData[data.category] = (categoryData[data.category] || 0) + data.amount;
+    });
+
+    const labels = Object.keys(categoryData);
+    const data = Object.values(categoryData);
+
+    if (labels.length === 0) {
+        document.getElementById('no-viz-data').style.display = 'block';
+        if (mainChart) {
+            mainChart.destroy();
+        }
+        return;
+    }
+
+    document.getElementById('no-viz-data').style.display = 'none';
+    const ctx = document.getElementById('vizChart').getContext('2d');
+    if (mainChart) {
+        mainChart.destroy();
+    }
+
+    mainChart = new Chart(ctx, {
+        type: chartType,
         data: {
-            labels: categories,
+            labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                ],
-                hoverBackgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                ]
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED'],
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'right',
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${formatCurrency(context.parsed)}`;
+                        }
+                    }
                 }
             }
         }
     });
 }
 
-function setupNavigation() {
-    const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
-    const contentSections = document.querySelectorAll('.content-section');
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            navLinks.forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            contentSections.forEach(section => section.style.display = 'none');
-            const targetId = link.dataset.target;
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.style.display = 'block';
-            }
-            if (targetId === 'dashboard') {
-                loadDashboardData();
-            } else if (targetId === 'monthly') {
-                loadMonthlyData();
-            } else if (targetId === 'view') {
-                loadAllExpenses();
-            } else if (targetId === 'viz') {
-                document.getElementById('vizMonth').value = new Date().toISOString().slice(0, 7);
-                loadVizChart();
-            } else if (targetId === 'compare') {
-                loadCompareChart();
-            }
-        });
-    });
-}
-
-async function loadMonthlyData(month = null) {
-    if (!currentUser) return;
-    const date = month ? new Date(month) : new Date();
-    const year = date.getFullYear();
-    const currentMonth = date.getMonth();
-
-    const monthlyStart = new Date(year, currentMonth, 1).toISOString().slice(0, 10);
-    const monthlyEnd = new Date(year, currentMonth + 1, 0).toISOString().slice(0, 10);
-
-    document.getElementById('currentMonthDisplay').textContent = `${year}년 ${currentMonth + 1}월`;
-    monthlySelectInput.value = `${year}-${(currentMonth + 1).toString().padStart(2, '0')}`;
-
-    const monthlyExpenses = await fetchExpenses(currentUser.uid, { start: monthlyStart, end: monthlyEnd });
-
-    let income = 0;
-    let expense = 0;
-    const categoryDetails = {};
-
-    const tableBody = document.getElementById('monthlyTableBody');
-    tableBody.innerHTML = '';
-
-    if (monthlyExpenses.length === 0) {
-        // Handle no data case
-    } else {
-        monthlyExpenses.forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${item.date}</td>
-                <td><span class="badge bg-${item.type === 'income' ? 'success' : 'danger'}">${item.type === 'income' ? '수입' : '지출'}</span></td>
-                <td>${item.description}</td>
-                <td>${item.category}</td>
-                <td>$${item.amount.toFixed(2)}</td>
-                <td>${item.card}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${item.id}', '${item.type}', '${item.date}', '${item.description}', '${item.category}', '${item.amount}', '${item.card}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteExpense('${item.id}')">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </td>
-            `;
-            tableBody.appendChild(row);
-
-            if (item.type === 'income') {
-                income += item.amount;
-            } else {
-                expense += item.amount;
-                if (!categoryDetails[item.category]) {
-                    categoryDetails[item.category] = { count: 0, total: 0 };
-                }
-                categoryDetails[item.category].count++;
-                categoryDetails[item.category].total += item.amount;
-            }
-        });
-    }
-
-    document.getElementById('monthlyIncome').textContent = `$${income.toFixed(2)}`;
-    document.getElementById('monthlyExpense').textContent = `$${expense.toFixed(2)}`;
-    document.getElementById('monthlyNet').textContent = `$${(income - expense).toFixed(2)}`;
-
-    const categoryList = document.getElementById('categoryDetailsList');
-    categoryList.innerHTML = '';
-    for (const cat in categoryDetails) {
-        const li = document.createElement('li');
-        li.textContent = `${cat}: $${categoryDetails[cat].total.toFixed(2)} (${categoryDetails[cat].count}건)`;
-        categoryList.appendChild(li);
-    }
-}
-
-async function loadAllExpenses() {
-    if (!currentUser) return;
-    const expenses = await fetchExpenses(currentUser.uid);
-    let income = 0;
-    let totalExpense = 0;
-    const tableBody = document.getElementById('expenseTableBody');
-    tableBody.innerHTML = '';
-
-    expenses.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.date}</td>
-            <td><span class="badge bg-${item.type === 'income' ? 'success' : 'danger'}">${item.type === 'income' ? '수입' : '지출'}</span></td>
-            <td>${item.description}</td>
-            <td>${item.category}</td>
-            <td>$${item.amount.toFixed(2)}</td>
-            <td>${item.card}</td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${item.id}', '${item.type}', '${item.date}', '${item.description}', '${item.category}', '${item.amount}', '${item.card}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteExpense('${item.id}')">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-
-        if (item.type === 'income') {
-            income += item.amount;
-        } else {
-            totalExpense += item.amount;
-        }
-    });
-
-    document.getElementById('filteredIncomeTotal').textContent = `$${income.toFixed(2)}`;
-    document.getElementById('filteredTotal').textContent = `$${totalExpense.toFixed(2)}`;
-}
-
-async function loadVizChart() {
-    if (!currentUser) return;
-    if (vizChart) vizChart.destroy();
-    const vizMonth = document.getElementById('vizMonth').value;
-    if (!vizMonth) return;
-
-    const date = new Date(vizMonth);
-    const monthlyStart = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().slice(0, 10);
-    const monthlyEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().slice(0, 10);
-    const expenses = await fetchExpenses(currentUser.uid, { start: monthlyStart, end: monthlyEnd });
-
-    const categoryTotals = {};
-    expenses.filter(item => item.type === 'expense').forEach(item => {
-        categoryTotals[item.category] = (categoryTotals[item.category] || 0) + item.amount;
-    });
-
-    const ctx = document.getElementById('vizChart').getContext('2d');
-    const chartType = document.getElementById('vizType').value;
-
-    if (Object.keys(categoryTotals).length === 0) {
-        document.getElementById('no-viz-data').style.display = 'block';
-        return;
-    }
-    document.getElementById('no-viz-data').style.display = 'none';
-
-    vizChart = new Chart(ctx, {
-        type: chartType,
-        data: {
-            labels: Object.keys(categoryTotals),
-            datasets: [{
-                label: '지출 금액',
-                data: Object.values(categoryTotals),
-                backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-                ],
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
-
-async function loadCompareChart() {
-    if (!currentUser) return;
-    if (compareChart) compareChart.destroy();
+// New function to compare expenses
+async function compareExpenses() {
     const month1 = document.getElementById('compareMonth1').value;
     const month2 = document.getElementById('compareMonth2').value;
+
     if (!month1 || !month2) {
         document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+        }
         return;
     }
 
-    const expenses1 = await fetchExpenses(currentUser.uid, { start: new Date(month1).toISOString().slice(0, 10), end: new Date(new Date(month1).getFullYear(), new Date(month1).getMonth() + 1, 0).toISOString().slice(0, 10) });
-    const expenses2 = await fetchExpenses(currentUser.uid, { start: new Date(month2).toISOString().slice(0, 10), end: new Date(new Date(month2).getFullYear(), new Date(month2).getMonth() + 1, 0).toISOString().slice(0, 10) });
+    try {
+        const q = query(collection(db, `users/${currentUser.uid}/transactions`), orderBy('date', 'asc'));
+        const querySnapshot = await getDocs(q);
+        const transactions = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const totalExpense1 = expenses1.filter(item => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0);
-    const totalExpense2 = expenses2.filter(item => item.type === 'expense').reduce((sum, item) => sum + item.amount, 0);
-    const totalIncome1 = expenses1.filter(item => item.type === 'income').reduce((sum, item) => sum + item.amount, 0);
-    const totalIncome2 = expenses2.filter(item => item.type === 'income').reduce((sum, item) => sum + item.amount, 0);
+        const expenses1 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month1));
+        const expenses2 = transactions.filter(t => t.type === 'expense' && t.date.startsWith(month2));
 
-    const ctx = document.getElementById('compareChart').getContext('2d');
-    compareChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['총 수입', '총 지출'],
-            datasets: [{
-                label: `${month1} 금액`,
-                data: [totalIncome1, totalExpense1],
-                backgroundColor: '#3b82f6',
-            }, {
-                label: `${month2} 금액`,
-                data: [totalIncome2, totalExpense2],
-                backgroundColor: '#ef4444',
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+        const categories1 = expenses1.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+        const categories2 = expenses2.reduce((acc, curr) => {
+            acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+            return acc;
+        }, {});
+
+        const allCategories = [...new Set([...Object.keys(categories1), ...Object.keys(categories2)])];
+
+        const data1 = allCategories.map(cat => categories1[cat] || 0);
+        const data2 = allCategories.map(cat => categories2[cat] || 0);
+
+        if (allCategories.length === 0) {
+            document.getElementById('no-compare-data').style.display = 'block';
+            if (compareChart) {
+                compareChart.destroy();
+            }
+            return;
         }
-    });
-    document.getElementById('no-compare-data').style.display = 'none';
-}
 
-function openEditModal(id, type, date, description, category, amount, card) {
-    document.getElementById('edit-id').value = id;
-    document.getElementById('edit-type').value = type;
-    document.getElementById('edit-date').value = date;
-    document.getElementById('edit-description').value = description;
-    document.getElementById('edit-category').value = category;
-    document.getElementById('edit-amount').value = amount;
-    document.getElementById('edit-card').value = card;
-    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
-    editModal.show();
-}
+        document.getElementById('no-compare-data').style.display = 'none';
 
-async function saveEdit() {
-    const id = document.getElementById('edit-id').value;
-    const type = document.getElementById('edit-type').value;
-    const date = document.getElementById('edit-date').value;
-    const description = document.getElementById('edit-description').value;
-    const category = document.getElementById('edit-category').value;
-    const amount = parseFloat(document.getElementById('edit-amount').value);
-    const card = document.getElementById('edit-card').value;
-    if (!currentUser) return;
-    try {
-        const expenseDocRef = doc(db, `users/${currentUser.uid}/expenses`, id);
-        await updateDoc(expenseDocRef, { type, date, description, category, amount, card });
-        showMessageModal('성공', '항목이 성공적으로 업데이트되었습니다.');
-        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-        loadAllExpenses(); // Reload data after update
+        const ctx = document.getElementById('compareChart').getContext('2d');
+        if (compareChart) {
+            compareChart.destroy();
+        }
+
+        compareChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: allCategories,
+                datasets: [{
+                    label: `${month1} 지출`,
+                    data: data1,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }, {
+                    label: `${month2} 지출`,
+                    data: data2,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '금액 ($)'
+                        }
+                    }
+                }
+            }
+        });
     } catch (error) {
-        showMessageModal('오류', '항목 업데이트 중 오류가 발생했습니다: ' + error.message);
-        console.error("Error updating document:", error);
+        console.error('Error loading comparison chart:', error);
+        document.getElementById('no-compare-data').style.display = 'block';
+        if (compareChart) {
+            compareChart.destroy();
+        }
     }
 }
 
-async function deleteExpense(id) {
-    if (!currentUser) return;
-    if (!confirm("정말로 이 항목을 삭제하시겠습니까?")) return;
-    try {
-        await deleteDoc(doc(db, `users/${currentUser.uid}/expenses`, id));
-        showMessageModal('성공', '항목이 성공적으로 삭제되었습니다.');
-        loadAllExpenses(); // Reload data after deletion
-    } catch (error) {
-        showMessageModal('오류', '항목 삭제 중 오류가 발생했습니다: ' + error.message);
-        console.error("Error deleting document:", error);
-    }
-}
-
+// New function to export data to CSV
 async function exportToCsv() {
     if (!currentUser) {
-        showMessageModal('오류', '로그인 후 이용해 주세요.');
-        return;
-    }
-    const expenses = await fetchExpenses(currentUser.uid);
-    if (expenses.length === 0) {
-        showMessageModal('알림', '내보낼 데이터가 없습니다.');
+        showMessageModal('오류', '로그인이 필요합니다.');
         return;
     }
 
-    const headers = ['날짜', '유형', '내용', '카테고리', '금액', '결제 수단'];
-    const rows = expenses.map(item => [
-        item.date,
-        item.type === 'income' ? '수입' : '지출',
-        item.description,
-        item.category,
-        item.amount,
-        item.card
-    ]);
+    const fromDate = document.getElementById('exportFromDate').value;
+    const toDate = document.getElementById('exportToDate').value;
 
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(',') + '\n' +
-        rows.map(row => row.join(',')).join('\n');
+    let q = collection(db, `users/${currentUser.uid}/transactions`);
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', '가계부_내역.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showMessageModal('성공', '데이터가 CSV 파일로 성공적으로 내보내졌습니다.');
+    // Apply date filters if they exist
+    if (fromDate && toDate) {
+        q = query(q, where('date', '>=', fromDate), where('date', '<=', toDate), orderBy('date', 'asc'));
+    } else {
+        q = query(q, orderBy('date', 'asc'));
+    }
+
+    try {
+        loadingSpinner.style.display = 'flex';
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            showMessageModal('내보내기 실패', '선택된 날짜 범위에 데이터가 없습니다.');
+            loadingSpinner.style.display = 'none';
+            return;
+        }
+
+        const headers = ['날짜', '유형', '내용', '카테고리', '금액', '결제 수단'];
+        let csvContent = headers.join(',') + '\n';
+
+        querySnapshot.forEach(doc => {
+            const data = doc.data();
+            const row = [
+                `"${data.date}"`,
+                `"${data.type === 'expense' ? '지출' : '수입'}"`,
+                `"${data.description.replace(/"/g, '""')}"`,
+                `"${data.category.replace(/"/g, '""')}"`,
+                `"${data.amount}"`,
+                `"${data.card.replace(/"/g, '""')}"`
+            ];
+            csvContent += row.join(',') + '\n';
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', '가계부_내역.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showMessageModal('내보내기 완료', 'CSV 파일 다운로드가 완료되었습니다.');
+    } catch (error) {
+        console.error("Error exporting data: ", error);
+        showMessageModal('오류', '데이터 내보내기 중 오류가 발생했습니다.');
+    } finally {
+        loadingSpinner.style.display = 'none';
+    }
 }
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Show loading spinner
-    loadingSpinner.style.display = 'flex';
+// Helper function to show modals
+function showMessageModal(title, body) {
+    const modalTitle = document.getElementById('messageModalTitle');
+    const modalBody = document.getElementById('messageModalBody');
+    if (modalTitle) modalTitle.textContent = title;
+    if (modalBody) modalBody.textContent = body;
+    const modal = new bootstrap.Modal(document.getElementById('messageModal'));
+    modal.show();
+}
 
-    // Auth state listener
-    onAuthStateChanged(auth, async (user) => {
+// Initial setup
+document.addEventListener('DOMContentLoaded', () => {
+    // Check for user login state on page load
+    onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUser = user;
-            loginPage.style.display = 'none';
-            appContainer.style.display = 'flex';
-            document.getElementById('user-email').textContent = user.email;
-            document.getElementById('user-id').textContent = user.uid.substring(0, 8);
-            loadDashboardData();
-            loadAllExpenses();
+            showApp();
+            loadUserData();
         } else {
-            currentUser = null;
-            loginPage.style.display = 'flex';
+            loadingSpinner.style.display = 'none';
+            loginPage.style.display = 'block';
             appContainer.style.display = 'none';
         }
-        loadingSpinner.style.display = 'none';
     });
 
-    // Forms
-    document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
-    document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
-    document.getElementById('addForm').addEventListener('submit', addExpense);
-    document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
-
-    // Logout and Password Reset
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-    document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        handlePasswordReset();
-    });
-
-    // Edit and Delete
-    document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
-
-    // Navigation
     setupNavigation();
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-        const currentMonth = new Date(monthlySelectInput.value);
-        currentMonth.setMonth(currentMonth.getMonth() - 1);
-        monthlySelectInput.value = currentMonth.toISOString().slice(0, 7);
-        loadMonthlyData(monthlySelectInput.value);
-    });
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-        const currentMonth = new Date(monthlySelectInput.value);
-        currentMonth.setMonth(currentMonth.getMonth() + 1);
-        monthlySelectInput.value = currentMonth.toISOString().slice(0, 7);
-        loadMonthlyData(monthlySelectInput.value);
-    });
-    monthlySelectInput.addEventListener('change', () => loadMonthlyData(monthlySelectInput.value));
 
-    // Page-specific initial loads
-    document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-    document.getElementById('monthly-select').value = new Date().toISOString().slice(0, 7);
-    document.getElementById('vizMonth').value = new Date().toISOString().slice(0, 7);
-    document.getElementById('vizType').addEventListener('change', loadVizChart);
-    document.getElementById('vizMonth').addEventListener('change', loadVizChart);
-    document.getElementById('compareMonth1').value = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().slice(0, 7);
-    document.getElementById('compareMonth2').value = new Date().toISOString().slice(0, 7);
-    document.getElementById('compareMonth1').addEventListener('change', loadCompareChart);
-    document.getElementById('compareMonth2').addEventListener('change', loadCompareChart);
-    document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
+    // Set today's date on add form and view filter
+    const today = getLocalDate();
+    if (document.getElementById('date')) {
+        document.getElementById('date').value = today;
+    }
 
-    // Login/Signup form toggles
-    document.getElementById('signupLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelector('.login-card').style.display = 'none';
-        document.getElementById('signup-form').style.display = 'block';
-    });
-    document.getElementById('loginLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('signup-form').style.display = 'none';
-        document.querySelector('.login-card').style.display = 'block';
-    });
+    // Auth forms event listeners
+    if (document.getElementById('loginForm')) document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
+    if (document.getElementById('googleSignInBtn')) document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+    if (document.getElementById('signupForm')) document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
+    if (document.getElementById('logoutBtn')) document.getElementById('logoutBtn').addEventListener('click', logout);
+    if (document.getElementById('signupLink')) {
+        document.getElementById('signupLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelector('.login-card').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'block';
+        });
+    }
+    if (document.getElementById('loginLink')) {
+        document.getElementById('loginLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('signup-form').style.display = 'none';
+            document.querySelector('.login-card').style.display = 'block';
+        });
+    }
+    if (document.getElementById('forgotPasswordLink')) document.getElementById('forgotPasswordLink').addEventListener('click', handlePasswordReset);
+    if (document.getElementById('saveEditBtn')) document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
-    // Dark Mode Toggle
+    // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         const isDarkMode = document.body.classList.contains('dark-mode');
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-        const icon = document.getElementById('theme-toggle').querySelector('i');
-        icon.classList.toggle('fa-sun', isDarkMode);
-        icon.classList.toggle('fa-moon', !isDarkMode);
     });
+
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
-        const icon = document.getElementById('theme-toggle').querySelector('i');
-        if (icon) {
-            icon.classList.add('fa-sun');
-            icon.classList.remove('fa-moon');
-        }
     }
+
+    // Expose functions to global scope for onclick attributes in HTML
     window.openEditModal = openEditModal;
     window.deleteExpense = deleteExpense;
-}
-);
+    window.showMessageModal = showMessageModal;
+});
