@@ -374,9 +374,6 @@ function setupNavigation() {
             });
             document.getElementById(targetId).classList.add('active');
 
-            if (targetId === 'monthly') {
-                showMonthlyExpenses();
-            }
             if (targetId === 'viz') {
                 document.getElementById('vizMonth').value = getMonthKey(getLocalDate());
                 plotChart();
@@ -406,21 +403,23 @@ function setupNavigation() {
     document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
 
     // Monthly navigation
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-        const currentDisplay = document.getElementById('currentMonthDisplay').textContent;
-        const [year, month] = currentDisplay.split('-');
-        const newDate = new Date(parseInt(year), parseInt(month) - 2, 1);
-        const newMonthKey = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-        showMonthlyExpenses(newMonthKey);
-    });
+document.getElementById('prevMonthBtn').addEventListener('click', () => {
+    const currentMonthInput = document.getElementById('monthly-select');
+    const [year, month] = currentMonthInput.value.split('-').map(Number);
+    const newDate = new Date(year, month - 2); // Go back one month
+    const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+    currentMonthInput.value = newMonth;
+    // The change event listener will automatically trigger loadMonthlyData
+});
 
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-        const currentDisplay = document.getElementById('currentMonthDisplay').textContent;
-        const [year, month] = currentDisplay.split('-');
-        const newDate = new Date(parseInt(year), parseInt(month), 1);
-        const newMonthKey = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-        showMonthlyExpenses(newMonthKey);
-    });
+document.getElementById('nextMonthBtn').addEventListener('click', () => {
+    const currentMonthInput = document.getElementById('monthly-select');
+    const [year, month] = currentMonthInput.value.split('-').map(Number);
+    const newDate = new Date(year, month); // Go forward one month
+    const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+    currentMonthInput.value = newMonth;
+    // The change event listener will automatically trigger loadMonthlyData
+});
 
     // Chart controls
     document.getElementById('vizMonth').addEventListener('change', plotChart);
@@ -1084,6 +1083,44 @@ async function exportCSV() {
     }
 }
 
+// Change this function to correctly filter by month and year
+async function loadTransactions(month) {
+    if (!currentUser) return;
+    loadingSpinner.style.display = 'flex';
+
+    // Parse the YYYY-MM string to get the year and month
+    const [year, mon] = month.split('-').map(Number);
+
+    // Create Date objects for the start and end of the month
+    // Note: Firestore queries on dates are tricky. Storing dates as ISO strings (YYYY-MM-DD) is more reliable.
+    const startDate = new Date(year, mon - 1, 1);
+    const endDate = new Date(year, mon, 0, 23, 59, 59); // Set to the last millisecond of the last day
+
+    const transactionsColRef = collection(db, 'users', currentUser.uid, 'transactions');
+    const q = query(
+        transactionsColRef,
+        where('date', '>=', startDate.toISOString().slice(0, 10)),
+        where('date', '<=', endDate.toISOString().slice(0, 10)),
+        orderBy('date', 'desc'),
+        orderBy('timestamp', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    loadingSpinner.style.display = 'none';
+
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+// New function to load data based on the selected month
+async function loadMonthlyData() {
+    const selectedMonth = monthlySelectInput.value;
+    if (!selectedMonth) return;
+
+    const transactions = await loadTransactions(selectedMonth);
+    displayTransactions(transactions);
+    updateSummary(transactions);
+    updateCharts(transactions);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Event listeners
     document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
@@ -1110,6 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
     document.getElementById('date').value = getLocalDate();
         monthlySelectInput.value = new Date().toISOString().slice(0, 7); // Set to current month
+        monthlySelectInput.addEventListener('change', loadMonthlyData);
 
     // Dark Mode Toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -1120,6 +1158,8 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.classList.toggle('fa-sun', isDarkMode);
         icon.classList.toggle('fa-moon', !isDarkMode);
     });
+
+    document.getElementById('monthly-select').addEventListener('change', loadMonthlyData);
 
     // Apply saved theme
     const savedTheme = localStorage.getItem('theme');
