@@ -400,12 +400,11 @@ body.dark-mode #monthly .bg-light {
 
 /* Enhanced monthly summary boxes */
 #monthly-summary-boxes .card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: box-shadow 0.2s ease;
     border: 2px solid transparent;
 }
 
 #monthly-summary-boxes .card:hover {
-    transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
@@ -443,7 +442,6 @@ body.dark-mode #categoryDetailsList li {
 
 #monthlyStatsList li:hover, #categoryDetailsList li:hover {
     background-color: var(--table-hover);
-    transform: translateX(5px);
 }
 
 /* Enhanced table styling for monthly view */
