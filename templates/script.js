@@ -31,7 +31,6 @@ let dashboardChart = null;
 const loadingSpinner = document.getElementById('loading-spinner');
 const loginPage = document.getElementById('login-page');
 const appContainer = document.getElementById('app-container');
-const monthlySelectInput = document.getElementById('monthly-select');
 const monthlyChartElement = document.getElementById('monthlyChart');
 const monthlyChartNoData = document.getElementById('no-monthly-data');
 
@@ -79,7 +78,7 @@ async function handleEmailSignup(e) {
 
     try {
         loadingSpinner.style.display = 'flex';
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithAndPassword(auth, email, password);
         currentUser = userCredential.user;
 
         // Initialize user data in Firestore
@@ -293,8 +292,11 @@ function setupNavigation() {
             document.getElementById(targetId).classList.add('active');
 
             if (targetId === 'monthly') {
-                // The monthly select change listener will handle the data load
-                // so we don't need a separate call here.
+                const monthlySelectInput = document.getElementById('monthly-select');
+                if (monthlySelectInput) {
+                    monthlySelectInput.value = new Date().toISOString().slice(0, 7);
+                    loadMonthlyData();
+                }
             }
             if (targetId === 'viz') {
                 document.getElementById('vizMonth').value = getMonthKey(getLocalDate());
@@ -314,43 +316,52 @@ function setupNavigation() {
     });
 
     // Form submissions and filters
-    document.getElementById('addForm').addEventListener('submit', addExpense);
-    document.getElementById('fromDate').addEventListener('change', refreshTable);
-    document.getElementById('toDate').addEventListener('change', refreshTable);
-    document.getElementById('filterCategory').addEventListener('change', refreshTable);
-    document.getElementById('descSearch').addEventListener('input', refreshTable);
+    if (document.getElementById('addForm')) document.getElementById('addForm').addEventListener('submit', addExpense);
+    if (document.getElementById('fromDate')) document.getElementById('fromDate').addEventListener('change', refreshTable);
+    if (document.getElementById('toDate')) document.getElementById('toDate').addEventListener('change', refreshTable);
+    if (document.getElementById('filterCategory')) document.getElementById('filterCategory').addEventListener('change', refreshTable);
+    if (document.getElementById('descSearch')) document.getElementById('descSearch').addEventListener('input', refreshTable);
 
     // Category change handlers
-    document.getElementById('category').addEventListener('change', handleCategoryChange);
-    document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
+    if (document.getElementById('category')) document.getElementById('category').addEventListener('change', handleCategoryChange);
+    if (document.getElementById('edit-category')) document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
 
     // Monthly navigation:
-    // This will now update the monthly-select input value, triggering the change event
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-        const currentMonthInput = document.getElementById('monthly-select');
-        const [year, month] = currentMonthInput.value.split('-').map(Number);
-        const newDate = new Date(year, month - 2); // Go back one month
-        const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-        currentMonthInput.value = newMonth;
-    });
+    if (document.getElementById('prevMonthBtn')) {
+        document.getElementById('prevMonthBtn').addEventListener('click', () => {
+            const monthlySelectInput = document.getElementById('monthly-select');
+            if (monthlySelectInput) {
+                const [year, month] = monthlySelectInput.value.split('-').map(Number);
+                const newDate = new Date(year, month - 2); // Go back one month
+                const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+                monthlySelectInput.value = newMonth;
+                loadMonthlyData();
+            }
+        });
+    }
 
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-        const currentMonthInput = document.getElementById('monthly-select');
-        const [year, month] = currentMonthInput.value.split('-').map(Number);
-        const newDate = new Date(year, month); // Go forward one month
-        const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-        currentMonthInput.value = newMonth;
-    });
+    if (document.getElementById('nextMonthBtn')) {
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            const monthlySelectInput = document.getElementById('monthly-select');
+            if (monthlySelectInput) {
+                const [year, month] = monthlySelectInput.value.split('-').map(Number);
+                const newDate = new Date(year, month); // Go forward one month
+                const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+                monthlySelectInput.value = newMonth;
+                loadMonthlyData();
+            }
+        });
+    }
 
     // Chart controls
-    document.getElementById('vizMonth').addEventListener('change', plotChart);
-    document.getElementById('vizType').addEventListener('change', plotChart);
+    if (document.getElementById('vizMonth')) document.getElementById('vizMonth').addEventListener('change', plotChart);
+    if (document.getElementById('vizType')) document.getElementById('vizType').addEventListener('change', plotChart);
 
     // Compare controls
-    document.getElementById('compareMonth1').addEventListener('change', compareExpenses);
-    document.getElementById('compareMonth2').addEventListener('change', compareExpenses);
+    if (document.getElementById('compareMonth1')) document.getElementById('compareMonth1').addEventListener('change', compareExpenses);
+    if (document.getElementById('compareMonth2')) document.getElementById('compareMonth2').addEventListener('change', compareExpenses);
 
-    document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+    if (document.getElementById('exportCsvBtn')) document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
 }
 
 // Utility functions
@@ -462,12 +473,12 @@ function plotDashboardChart(data) {
 
     // If no data, show empty chart
     if (labels.length === 0) {
-        document.getElementById('dashboardChart').style.display = 'none';
-        document.getElementById('no-dashboard-data').style.display = 'block';
+        if (document.getElementById('dashboardChart')) document.getElementById('dashboardChart').style.display = 'none';
+        if (document.getElementById('no-dashboard-data')) document.getElementById('no-dashboard-data').style.display = 'block';
         return;
     } else {
-        document.getElementById('dashboardChart').style.display = 'block';
-        document.getElementById('no-dashboard-data').style.display = 'none';
+        if (document.getElementById('dashboardChart')) document.getElementById('dashboardChart').style.display = 'block';
+        if (document.getElementById('no-dashboard-data')) document.getElementById('no-dashboard-data').style.display = 'none';
     }
 
     const ctx = document.getElementById('dashboardChart');
@@ -750,7 +761,10 @@ async function populateFilterCategories() {
 
 // New function to load and display data for the selected month
 async function loadMonthlyData() {
-    const selectedMonth = monthlySelectInput.value;
+    const selectedMonthInput = document.getElementById('monthly-select');
+    if (!selectedMonthInput) return;
+
+    const selectedMonth = selectedMonthInput.value;
     if (!selectedMonth) return;
 
     document.getElementById('currentMonthDisplay').textContent = selectedMonth;
@@ -809,9 +823,13 @@ function displayTransactions(expenses) {
 }
 
 function updateSummary(totalIncome, totalExpense) {
-    document.getElementById('monthlyIncome').textContent = formatCurrency(totalIncome);
-    document.getElementById('monthlyExpense').textContent = formatCurrency(totalExpense);
-    document.getElementById('monthlyNet').textContent = formatCurrency(totalIncome - totalExpense);
+    const monthlyIncome = document.getElementById('monthlyIncome');
+    const monthlyExpense = document.getElementById('monthlyExpense');
+    const monthlyNet = document.getElementById('monthlyNet');
+
+    if (monthlyIncome) monthlyIncome.textContent = formatCurrency(totalIncome);
+    if (monthlyExpense) monthlyExpense.textContent = formatCurrency(totalExpense);
+    if (monthlyNet) monthlyNet.textContent = formatCurrency(totalIncome - totalExpense);
 }
 
 function updateCharts(expenses) {
@@ -829,15 +847,17 @@ function updateCharts(expenses) {
     }
 
     if (labels.length === 0) {
-        monthlyChartElement.style.display = 'none';
-        monthlyChartNoData.style.display = 'block';
+        if (monthlyChartElement) monthlyChartElement.style.display = 'none';
+        if (monthlyChartNoData) monthlyChartNoData.style.display = 'block';
         return;
     } else {
-        monthlyChartElement.style.display = 'block';
-        monthlyChartNoData.style.display = 'none';
+        if (monthlyChartElement) monthlyChartElement.style.display = 'block';
+        if (monthlyChartNoData) monthlyChartNoData.style.display = 'none';
     }
 
-    const ctx = monthlyChartElement.getContext('2d');
+    const ctx = monthlyChartElement ? monthlyChartElement.getContext('2d') : null;
+    if (!ctx) return;
+
     mainChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -874,8 +894,10 @@ async function plotChart() {
         mainChart = null;
     }
 
-    const month = document.getElementById('vizMonth').value || getMonthKey(getLocalDate());
-    const type = document.getElementById('vizType').value;
+    const vizMonth = document.getElementById('vizMonth');
+    const vizType = document.getElementById('vizType');
+    const month = vizMonth ? vizMonth.value || getMonthKey(getLocalDate()) : getMonthKey(getLocalDate());
+    const type = vizType ? vizType.value : 'pie';
     const chartElement = document.getElementById('vizChart');
     const noDataMessage = document.getElementById('no-viz-data');
 
@@ -898,15 +920,17 @@ async function plotChart() {
         const values = Object.values(categorySums);
 
         if (labels.length === 0) {
-            chartElement.style.display = 'none';
-            noDataMessage.style.display = 'block';
+            if (chartElement) chartElement.style.display = 'none';
+            if (noDataMessage) noDataMessage.style.display = 'block';
             return;
         } else {
-            chartElement.style.display = 'block';
-            noDataMessage.style.display = 'none';
+            if (chartElement) chartElement.style.display = 'block';
+            if (noDataMessage) noDataMessage.style.display = 'none';
         }
 
-        const ctx = chartElement.getContext('2d');
+        const ctx = chartElement ? chartElement.getContext('2d') : null;
+        if (!ctx) return;
+
         mainChart = new Chart(ctx, {
             type: type,
             data: {
@@ -937,17 +961,22 @@ async function plotChart() {
 
     } catch (error) {
         console.error('Error plotting chart:', error);
-        chartElement.style.display = 'none';
-        noDataMessage.style.display = 'block';
+        if (chartElement) chartElement.style.display = 'none';
+        if (noDataMessage) noDataMessage.style.display = 'block';
     }
 }
 
 async function compareExpenses() {
-    const month1 = document.getElementById('compareMonth1').value;
-    const month2 = document.getElementById('compareMonth2').value;
+    const month1Input = document.getElementById('compareMonth1');
+    const month2Input = document.getElementById('compareMonth2');
     const comparisonTableBody = document.getElementById('comparisonTableBody');
 
-    if (!month1 || !month2 || !comparisonTableBody) return;
+    if (!month1Input || !month2Input || !comparisonTableBody) return;
+
+    const month1 = month1Input.value;
+    const month2 = month2Input.value;
+
+    if (!month1 || !month2) return;
     comparisonTableBody.innerHTML = '';
 
     try {
@@ -1025,40 +1054,42 @@ function exportCSV() {
     document.body.removeChild(link);
 }
 
-
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
-    document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
-    document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    document.getElementById('showSignupLink').addEventListener('click', (e) => {
+    if (document.getElementById('loginForm')) document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
+    if (document.getElementById('signupForm')) document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
+    if (document.getElementById('googleSignInBtn')) document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+    if (document.getElementById('logoutBtn')) document.getElementById('logoutBtn').addEventListener('click', logout);
+    if (document.getElementById('showSignupLink')) document.getElementById('showSignupLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'none';
         document.getElementById('signup-form').style.display = 'block';
     });
-    document.getElementById('showLoginLink').addEventListener('click', (e) => {
+    if (document.getElementById('showLoginLink')) document.getElementById('showLoginLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'block';
         document.getElementById('signup-form').style.display = 'none';
     });
-    document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
+    if (document.getElementById('forgotPasswordLink')) document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
         e.preventDefault();
         handlePasswordReset();
     });
-    document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+    if (document.getElementById('saveEditBtn')) document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
     // Initial setups
     setupNavigation();
-    document.getElementById('date').value = getLocalDate();
-    monthlySelectInput.value = new Date().toISOString().slice(0, 7); // Set to current month
-    monthlySelectInput.addEventListener('change', loadMonthlyData);
+    if (document.getElementById('date')) document.getElementById('date').value = getLocalDate();
+    const monthlySelectInput = document.getElementById('monthly-select');
+    if (monthlySelectInput) {
+        monthlySelectInput.value = new Date().toISOString().slice(0, 7); // Set to current month
+        monthlySelectInput.addEventListener('change', loadMonthlyData);
 
-    // Initial data load when the user logs in
-    loadMonthlyData();
+        // Initial data load when the user logs in
+        loadMonthlyData();
+    }
 
     // Dark Mode Toggle
-    document.getElementById('theme-toggle').addEventListener('click', () => {
+    if (document.getElementById('theme-toggle')) document.getElementById('theme-toggle').addEventListener('click', () => {
         document.body.classList.toggle('dark-mode');
         const isDarkMode = document.body.classList.contains('dark-mode');
         localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
@@ -1071,8 +1102,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
-        const icon = document.getElementById('theme-toggle').querySelector('i');
-        icon.classList.add('fa-sun');
-        icon.classList.remove('fa-moon');
+        const icon = document.getElementById('theme-toggle');
+        if (icon) {
+             const iconElem = icon.querySelector('i');
+             iconElem.classList.add('fa-sun');
+             iconElem.classList.remove('fa-moon');
+        }
     }
 });
