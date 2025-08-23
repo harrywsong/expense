@@ -155,6 +155,88 @@ async function initializeUserData(uid) {
     }
 }
 
+// async function loadDemoDataForUser(uid) {
+//     const now = new Date();
+//     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+//     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+//     const lastMonthKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+//
+//     const demoExpenses = [
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-01`,
+//             description: '마트 장보기',
+//             category: '그로서리',
+//             amount: 50000,
+//             card: 'BMO Debit',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-03`,
+//             description: '카페',
+//             category: '외식',
+//             amount: 8000,
+//             card: '현금',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'income',
+//             date: `${currentMonth}-01`,
+//             description: '월급',
+//             category: '급여',
+//             amount: 3000000,
+//             card: 'TD',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-05`,
+//             description: '주유',
+//             category: '주유+주차',
+//             amount: 60000,
+//             card: 'BMO WJ',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         },
+//         {
+//             userId: uid,
+//             type: 'expense',
+//             date: `${currentMonth}-07`,
+//             description: '휴대폰 요금',
+//             category: '고정비용',
+//             amount: 45000,
+//             card: 'BMO JH',
+//             month: currentMonth,
+//             timestamp: new Date().toISOString()
+//         }
+//     ];
+//
+//     // Add demo expenses
+//     for (const expense of demoExpenses) {
+//         await addDoc(collection(db, 'expenses'), expense);
+//     }
+//
+//     // Add demo budgets
+//     const demoBudgets = [
+//         { userId: uid, category: '그로서리', amount: 150000 },
+//         { userId: uid, category: '외식', amount: 100000 },
+//         { userId: uid, category: '주유+주차', amount: 120000 },
+//         { userId: uid, category: '고정비용', amount: 200000 }
+//     ];
+//
+//     for (const budget of demoBudgets) {
+//         await setDoc(doc(db, 'budgets', `${uid}_${budget.category}`), budget);
+//     }
+// }
+
 async function logout() {
     try {
         await signOut(auth);
@@ -459,8 +541,12 @@ function plotDashboardChart(data) {
 
     // If no data, show empty chart
     if (labels.length === 0) {
-        labels.push('데이터 없음');
-        values.push(0);
+        document.getElementById('dashboardChart').style.display = 'none';
+        document.getElementById('no-dashboard-data').style.display = 'block';
+        return;
+    } else {
+        document.getElementById('dashboardChart').style.display = 'block';
+        document.getElementById('no-dashboard-data').style.display = 'none';
     }
 
     const ctx = document.getElementById('dashboardChart');
@@ -498,10 +584,6 @@ function plotDashboardChart(data) {
     }
 }
 
-// Data management functions
-// Data management functions
-// Data management functions
-// Data management functions
 // Data management functions
 async function addExpense(e) {
     e.preventDefault();
@@ -568,7 +650,7 @@ async function getFilteredExpenses() {
 }
 
 async function refreshTable() {
-    const tableBody = document.getElementById('expenseTable').querySelector('tbody');
+    const tableBody = document.getElementById('expenseTableBody');
     if (!tableBody) return;
 
     tableBody.innerHTML = '';
@@ -776,6 +858,8 @@ async function plotChart() {
 
     const month = document.getElementById('vizMonth').value || getMonthKey(getLocalDate());
     const type = document.getElementById('vizType').value;
+    const chartElement = document.getElementById('vizChart');
+    const noDataMessage = document.getElementById('no-viz-data');
 
     try {
         const q = query(
@@ -796,11 +880,15 @@ async function plotChart() {
         const values = Object.values(categorySums);
 
         if (labels.length === 0) {
-            labels.push('데이터 없음');
-            values.push(0);
+            chartElement.style.display = 'none';
+            noDataMessage.style.display = 'block';
+            return;
+        } else {
+            chartElement.style.display = 'block';
+            noDataMessage.style.display = 'none';
         }
 
-        const ctx = document.getElementById('vizChart');
+        const ctx = chartElement;
         if (!ctx) return;
 
         const config = {
@@ -817,264 +905,220 @@ async function plotChart() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top' },
+                    legend: {
+                        position: 'top',
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed;
-                                const actualValue = type === 'pie' ? value : value.y || value;
-                                return `${label}: ${formatCurrency(actualValue)}`;
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += formatCurrency(context.parsed.y);
+                                }
+                                return label;
                             }
                         }
                     }
-                },
-                scales: type === 'pie' ? {} : { y: { beginAtZero: true } }
+                }
             }
         };
 
+        if (type === 'bar') {
+            config.options.scales = {
+                y: {
+                    beginAtZero: true
+                }
+            };
+        }
+
         mainChart = new Chart(ctx, config);
     } catch (error) {
-        console.error('Chart error:', error);
+        console.error('Error plotting chart:', error);
+        chartElement.style.display = 'none';
+        noDataMessage.style.display = 'block';
     }
 }
 
 async function compareExpenses() {
+    if (mainChart) {
+        mainChart.destroy();
+        mainChart = null;
+    }
+
     const month1 = document.getElementById('compareMonth1').value;
     const month2 = document.getElementById('compareMonth2').value;
-    const resultsDiv = document.getElementById('compareResults');
-    if (!resultsDiv) return;
-
-    resultsDiv.innerHTML = '';
+    const chartElement = document.getElementById('compareChart');
+    const noDataMessage = document.getElementById('no-compare-data');
 
     if (!month1 || !month2) {
-        resultsDiv.innerHTML = '<p class="text-muted">비교할 두 달을 선택하세요.</p>';
+        chartElement.style.display = 'none';
+        noDataMessage.style.display = 'block';
         return;
     }
 
     try {
-        // Get expenses for first month
         const q1 = query(
             collection(db, 'expenses'),
             where('userId', '==', currentUser.uid),
             where('month', '==', month1),
             where('type', '==', 'expense')
         );
-        const snapshot1 = await getDocs(q1);
-
-        // Get expenses for second month
         const q2 = query(
             collection(db, 'expenses'),
             where('userId', '==', currentUser.uid),
             where('month', '==', month2),
             where('type', '==', 'expense')
         );
-        const snapshot2 = await getDocs(q2);
 
-        const categorySums1 = {};
+        const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+        const data1 = {};
         snapshot1.forEach(doc => {
             const exp = doc.data();
-            categorySums1[exp.category] = (categorySums1[exp.category] || 0) + exp.amount;
+            data1[exp.category] = (data1[exp.category] || 0) + exp.amount;
         });
 
-        const categorySums2 = {};
+        const data2 = {};
         snapshot2.forEach(doc => {
             const exp = doc.data();
-            categorySums2[exp.category] = (categorySums2[exp.category] || 0) + exp.amount;
+            data2[exp.category] = (data2[exp.category] || 0) + exp.amount;
         });
 
-        const allCategories = [...new Set([...Object.keys(categorySums1), ...Object.keys(categorySums2)])];
-        allCategories.forEach(category => {
-            const sum1 = categorySums1[category] || 0;
-            const sum2 = categorySums2[category] || 0;
-            const difference = sum2 - sum1;
-            const diffClass = difference > 0 ? 'text-danger' : 'text-success';
-            const diffSign = difference > 0 ? '+' : '';
-            resultsDiv.innerHTML += `
-                <p><strong>${category}:</strong> 
-                ${formatCurrency(sum1)} vs ${formatCurrency(sum2)} 
-                (<span class="${diffClass}">${diffSign}${formatCurrency(difference)}</span>)
-                </p>`;
+        const allCategories = [...new Set([...Object.keys(data1), ...Object.keys(data2)])];
+        const values1 = allCategories.map(cat => data1[cat] || 0);
+        const values2 = allCategories.map(cat => data2[cat] || 0);
+
+        if (allCategories.length === 0) {
+            chartElement.style.display = 'none';
+            noDataMessage.style.display = 'block';
+            return;
+        } else {
+            chartElement.style.display = 'block';
+            noDataMessage.style.display = 'none';
+        }
+
+        const ctx = chartElement;
+        if (!ctx) return;
+
+        mainChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: allCategories,
+                datasets: [
+                    {
+                        label: month1,
+                        data: values1,
+                        backgroundColor: '#5D5FEF',
+                    },
+                    {
+                        label: month2,
+                        data: values2,
+                        backgroundColor: '#FF6384',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: false },
+                    y: { stacked: false, beginAtZero: true }
+                }
+            }
         });
     } catch (error) {
         console.error('Error comparing expenses:', error);
-        resultsDiv.innerHTML = '<p class="text-danger">비교 데이터를 불러오는 중 오류가 발생했습니다.</p>';
-    }
-}
-
-async function exportMonth() {
-    const month = document.getElementById('exportMonth').value;
-
-    if (!month) {
-        showMessage('알림', '내보낼 월을 선택하세요.');
-        return;
-    }
-
-    try {
-        const q = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            where('month', '==', month),
-            orderBy('date', 'asc')
-        );
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            showMessage('알림', '선택한 월에 내보낼 데이터가 없습니다.');
-            return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "날짜,구분,내용,카테고리,금액,결제수단\n";
-
-        querySnapshot.forEach(doc => {
-            const exp = doc.data();
-            const row = [
-                exp.date,
-                exp.type === 'income' ? '수입' : '지출',
-                exp.description,
-                exp.category,
-                exp.amount,
-                exp.card
-            ].map(e => `"${e}"`).join(',');
-            csvContent += row + "\n";
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `가계부_${month}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } catch (error) {
-        console.error('Error exporting data:', error);
-        showMessage('오류', '데이터 내보내기에 실패했습니다.');
+        chartElement.style.display = 'none';
+        noDataMessage.style.display = 'block';
     }
 }
 
 async function exportCSV() {
-    const expenses = await getFilteredExpenses();
+    try {
+        const q = query(
+            collection(db, 'expenses'),
+            where('userId', '==', currentUser.uid),
+            orderBy('date', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
 
-    if (expenses.length === 0) {
-        showMessage('오류', '내보낼 데이터가 없습니다.');
-        return;
+        if (querySnapshot.empty) {
+            showMessage('내보내기 실패', '내보낼 데이터가 없습니다.');
+            return;
+        }
+
+        let csvContent = "날짜,유형,내용,카테고리,금액,결제수단\n";
+
+        querySnapshot.forEach(doc => {
+            const exp = doc.data();
+            const row = `${exp.date},${exp.type === 'income' ? '수입' : '지출'},"${exp.description.replace(/"/g, '""')}",${exp.category},${exp.amount},${exp.card}\n`;
+            csvContent += row;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "가계부_내역.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showMessage('내보내기 완료', 'CSV 파일이 성공적으로 생성되었습니다.');
+
+    } catch (error) {
+        console.error('Error exporting CSV:', error);
+        showMessage('내보내기 실패', 'CSV 파일 생성 중 오류가 발생했습니다.');
     }
+}
 
-    const headers = ["날짜", "유형", "설명", "카테고리", "금액", "카드"];
-    const csvRows = [headers.join(',')];
-
-    expenses.forEach(expense => {
-        const row = [
-            `"${expense.date}"`,
-            `"${expense.type === 'income' ? '수입' : '지출'}"`,
-            `"${expense.description.replace(/"/g, '""')}"`,
-            `"${expense.category.replace(/"/g, '""')}"`,
-            expense.amount,
-            `"${expense.card}"`
-        ];
-        csvRows.push(row.join(','));
-    });
-
-    const csvString = csvRows.join('\n');
-    const bom = '\ufeff'; // UTF-8 BOM
-    const blob = new Blob([bom + csvString], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'expenses.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    showMessage('성공', '데이터가 CSV 파일로 성공적으로 내보내졌습니다.');
-}// Initialize the app
-document.addEventListener('DOMContentLoaded', function() {
-    // Set up authentication
+document.addEventListener('DOMContentLoaded', () => {
+    // Event listeners
     document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
     document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
-
-    // Toggle between login and signup forms
-    document.getElementById('signupLink').addEventListener('click', function(e) {
+    document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('signupLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'none';
         document.getElementById('signup-form').style.display = 'block';
     });
-
-    document.getElementById('loginLink').addEventListener('click', function(e) {
+    document.getElementById('loginLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'block';
         document.getElementById('signup-form').style.display = 'none';
     });
-
-    document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+    document.getElementById('forgotPasswordLink').addEventListener('click', (e) => {
         e.preventDefault();
         handlePasswordReset();
     });
+    document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
 
-    // Google Sign-In button
-    document.getElementById('googleSignInBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        handleGoogleSignIn();
+    // Initial setups
+    setupNavigation();
+    document.getElementById('date').value = getLocalDate();
+
+    // Dark Mode Toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        const icon = document.getElementById('theme-toggle').querySelector('i');
+        icon.classList.toggle('fa-sun', isDarkMode);
+        icon.classList.toggle('fa-moon', !isDarkMode);
     });
 
-    // Logout functionality
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
-    }
-
-    // Set current date
-    const dateInput = document.getElementById('date');
-    const vizMonthInput = document.getElementById('vizMonth');
-    const exportMonthInput = document.getElementById('exportMonth');
-
-    if (dateInput) dateInput.value = getLocalDate();
-    if (vizMonthInput) vizMonthInput.value = getMonthKey(getLocalDate());
-    if (exportMonthInput) exportMonthInput.value = getMonthKey(getLocalDate());
-
-    // Setup navigation
-    setupNavigation();
-
-    // Show loading spinner initially
-    loadingSpinner.style.display = 'flex';
-
-    const themeToggleButton = document.getElementById('theme-toggle');
-
-    // Check for saved theme preference or system preference
+    // Apply saved theme
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
-        if (themeToggleButton) {
-            themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i>';
-        }
-    } else {
-        if (themeToggleButton) {
-            themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i>';
-        }
-    }
-
-    if (themeToggleButton) {
-        themeToggleButton.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            if (document.body.classList.contains('dark-mode')) {
-                localStorage.setItem('theme', 'dark');
-                themeToggleButton.innerHTML = '<i class="fas fa-sun me-2"></i>';
-            } else {
-                localStorage.setItem('theme', 'light');
-                themeToggleButton.innerHTML = '<i class="fas fa-moon me-2"></i>';
-            }
-        });
+        const icon = document.getElementById('theme-toggle').querySelector('i');
+        icon.classList.add('fa-sun');
+        icon.classList.remove('fa-moon');
     }
 });
 
-// Global function exports for onclick handlers
-window.handleGoogleSignIn = handleGoogleSignIn;
 window.openEditModal = openEditModal;
-window.saveEdit = saveEdit;
 window.deleteExpense = deleteExpense;
-window.exportMonth = exportMonth;
