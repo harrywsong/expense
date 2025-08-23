@@ -576,7 +576,16 @@ function plotDashboardChart(data) {
                         }
                     }
                 },
-                scales: { y: { beginAtZero: true } }
+                scales: {
+                    y: {
+                        beginAtZero: true, // This is the fix for the vertical stretch
+                        ticks: {
+                            callback: function(value, index, ticks) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                }
             }
         });
     } catch (error) {
