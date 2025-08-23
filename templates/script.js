@@ -148,95 +148,11 @@ async function initializeUserData(uid) {
             createdAt: new Date().toISOString(),
             lastLogin: new Date().toISOString()
         });
-
-        // Initialize with demo data
-        await loadDemoDataForUser(uid);
     } catch (error) {
         console.error('Error initializing user data:', error);
     }
 }
 
-// async function loadDemoDataForUser(uid) {
-//     const now = new Date();
-//     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-//     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-//     const lastMonthKey = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
-//
-//     const demoExpenses = [
-//         {
-//             userId: uid,
-//             type: 'expense',
-//             date: `${currentMonth}-01`,
-//             description: '마트 장보기',
-//             category: '그로서리',
-//             amount: 50000,
-//             card: 'BMO Debit',
-//             month: currentMonth,
-//             timestamp: new Date().toISOString()
-//         },
-//         {
-//             userId: uid,
-//             type: 'expense',
-//             date: `${currentMonth}-03`,
-//             description: '카페',
-//             category: '외식',
-//             amount: 8000,
-//             card: '현금',
-//             month: currentMonth,
-//             timestamp: new Date().toISOString()
-//         },
-//         {
-//             userId: uid,
-//             type: 'income',
-//             date: `${currentMonth}-01`,
-//             description: '월급',
-//             category: '급여',
-//             amount: 3000000,
-//             card: 'TD',
-//             month: currentMonth,
-//             timestamp: new Date().toISOString()
-//         },
-//         {
-//             userId: uid,
-//             type: 'expense',
-//             date: `${currentMonth}-05`,
-//             description: '주유',
-//             category: '주유+주차',
-//             amount: 60000,
-//             card: 'BMO WJ',
-//             month: currentMonth,
-//             timestamp: new Date().toISOString()
-//         },
-//         {
-//             userId: uid,
-//             type: 'expense',
-//             date: `${currentMonth}-07`,
-//             description: '휴대폰 요금',
-//             category: '고정비용',
-//             amount: 45000,
-//             card: 'BMO JH',
-//             month: currentMonth,
-//             timestamp: new Date().toISOString()
-//         }
-//     ];
-//
-//     // Add demo expenses
-//     for (const expense of demoExpenses) {
-//         await addDoc(collection(db, 'expenses'), expense);
-//     }
-//
-//     // Add demo budgets
-//     const demoBudgets = [
-//         { userId: uid, category: '그로서리', amount: 150000 },
-//         { userId: uid, category: '외식', amount: 100000 },
-//         { userId: uid, category: '주유+주차', amount: 120000 },
-//         { userId: uid, category: '고정비용', amount: 200000 }
-//     ];
-//
-//     for (const budget of demoBudgets) {
-//         await setDoc(doc(db, 'budgets', `${uid}_${budget.category}`), budget);
-//     }
-// }
 
 async function logout() {
     try {
@@ -374,6 +290,10 @@ function setupNavigation() {
             });
             document.getElementById(targetId).classList.add('active');
 
+            if (targetId === 'monthly') {
+                // The monthly select change listener will handle the data load
+                // so we don't need a separate call here.
+            }
             if (targetId === 'viz') {
                 document.getElementById('vizMonth').value = getMonthKey(getLocalDate());
                 plotChart();
@@ -402,24 +322,23 @@ function setupNavigation() {
     document.getElementById('category').addEventListener('change', handleCategoryChange);
     document.getElementById('edit-category').addEventListener('change', handleEditCategoryChange);
 
-    // Monthly navigation
-document.getElementById('prevMonthBtn').addEventListener('click', () => {
-    const currentMonthInput = document.getElementById('monthly-select');
-    const [year, month] = currentMonthInput.value.split('-').map(Number);
-    const newDate = new Date(year, month - 2); // Go back one month
-    const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-    currentMonthInput.value = newMonth;
-    // The change event listener will automatically trigger loadMonthlyData
-});
+    // Monthly navigation:
+    // This will now update the monthly-select input value, triggering the change event
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+        const currentMonthInput = document.getElementById('monthly-select');
+        const [year, month] = currentMonthInput.value.split('-').map(Number);
+        const newDate = new Date(year, month - 2); // Go back one month
+        const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+        currentMonthInput.value = newMonth;
+    });
 
-document.getElementById('nextMonthBtn').addEventListener('click', () => {
-    const currentMonthInput = document.getElementById('monthly-select');
-    const [year, month] = currentMonthInput.value.split('-').map(Number);
-    const newDate = new Date(year, month); // Go forward one month
-    const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
-    currentMonthInput.value = newMonth;
-    // The change event listener will automatically trigger loadMonthlyData
-});
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+        const currentMonthInput = document.getElementById('monthly-select');
+        const [year, month] = currentMonthInput.value.split('-').map(Number);
+        const newDate = new Date(year, month); // Go forward one month
+        const newMonth = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`;
+        currentMonthInput.value = newMonth;
+    });
 
     // Chart controls
     document.getElementById('vizMonth').addEventListener('change', plotChart);
@@ -619,7 +538,7 @@ async function addExpense(e) {
         document.getElementById('customCategoryGroup').style.display = 'none';
         renderDashboard();
         refreshTable(); // This line updates "All Transactions"
-        showMonthlyExpenses(); // This line updates "Monthly Breakdown"
+        loadMonthlyData(); // This line updates "Monthly Breakdown"
         showMessage('성공', '항목이 성공적으로 추가되었습니다.');
     } catch (error) {
         console.error('Error adding expense:', error);
@@ -762,6 +681,7 @@ async function saveEdit() {
         renderDashboard();
         refreshTable();
         populateFilterCategories();
+        loadMonthlyData(); // Update monthly data after edit
         showMessage('성공', '항목이 성공적으로 수정되었습니다.');
     } catch (error) {
         console.error('Error updating expense:', error);
@@ -778,6 +698,7 @@ async function deleteExpense(expenseId) {
         renderDashboard();
         refreshTable();
         populateFilterCategories();
+        loadMonthlyData(); // Update monthly data after delete
         showMessage('성공', '항목이 성공적으로 삭제되었습니다.');
     } catch (error) {
         console.error('Error deleting expense:', error);
@@ -825,19 +746,22 @@ async function populateFilterCategories() {
     }
 }
 
+// New function to load and display data for the selected month
+async function loadMonthlyData() {
+    const selectedMonth = monthlySelectInput.value;
+    if (!selectedMonth) return;
 
-async function showMonthlyExpenses(monthKey = getMonthKey(getLocalDate())) {
     const tableBody = document.getElementById('monthlyTableBody');
     if (!tableBody) return;
 
     tableBody.innerHTML = '';
-    document.getElementById('currentMonthDisplay').textContent = monthKey;
+    document.getElementById('currentMonthDisplay').textContent = selectedMonth;
 
     try {
         const q = query(
             collection(db, 'expenses'),
             where('userId', '==', currentUser.uid),
-            where('month', '==', monthKey),
+            where('month', '==', selectedMonth),
             orderBy('date', 'desc')
         );
         const querySnapshot = await getDocs(q);
@@ -855,7 +779,7 @@ async function showMonthlyExpenses(monthKey = getMonthKey(getLocalDate())) {
             `;
         });
     } catch (error) {
-        console.error('Error showing monthly expenses:', error);
+        console.error('Error loading monthly data:', error);
     }
 }
 
@@ -897,15 +821,13 @@ async function plotChart() {
             noDataMessage.style.display = 'none';
         }
 
-        const ctx = chartElement;
-        if (!ctx) return;
-
-        const config = {
+        const ctx = chartElement.getContext('2d');
+        mainChart = new Chart(ctx, {
             type: type,
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '지출',
+                    label: '월별 지출',
                     data: values,
                     backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
                 }]
@@ -920,30 +842,14 @@ async function plotChart() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += formatCurrency(context.parsed.y);
-                                }
-                                return label;
+                                return `${context.label}: ${formatCurrency(context.parsed.y)}`;
                             }
                         }
                     }
                 }
             }
-        };
+        });
 
-        if (type === 'bar') {
-            config.options.scales = {
-                y: {
-                    beginAtZero: true
-                }
-            };
-        }
-
-        mainChart = new Chart(ctx, config);
     } catch (error) {
         console.error('Error plotting chart:', error);
         chartElement.style.display = 'none';
@@ -952,21 +858,12 @@ async function plotChart() {
 }
 
 async function compareExpenses() {
-    if (mainChart) {
-        mainChart.destroy();
-        mainChart = null;
-    }
-
     const month1 = document.getElementById('compareMonth1').value;
     const month2 = document.getElementById('compareMonth2').value;
-    const chartElement = document.getElementById('compareChart');
-    const noDataMessage = document.getElementById('no-compare-data');
+    const comparisonTableBody = document.getElementById('comparisonTableBody');
 
-    if (!month1 || !month2) {
-        chartElement.style.display = 'none';
-        noDataMessage.style.display = 'block';
-        return;
-    }
+    if (!month1 || !month2 || !comparisonTableBody) return;
+    comparisonTableBody.innerHTML = '';
 
     try {
         const q1 = query(
@@ -984,155 +881,78 @@ async function compareExpenses() {
 
         const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
-        const data1 = {};
+        const expenses1 = {};
         snapshot1.forEach(doc => {
             const exp = doc.data();
-            data1[exp.category] = (data1[exp.category] || 0) + exp.amount;
+            expenses1[exp.category] = (expenses1[exp.category] || 0) + exp.amount;
         });
 
-        const data2 = {};
+        const expenses2 = {};
         snapshot2.forEach(doc => {
             const exp = doc.data();
-            data2[exp.category] = (data2[exp.category] || 0) + exp.amount;
+            expenses2[exp.category] = (expenses2[exp.category] || 0) + exp.amount;
         });
 
-        const allCategories = [...new Set([...Object.keys(data1), ...Object.keys(data2)])];
-        const values1 = allCategories.map(cat => data1[cat] || 0);
-        const values2 = allCategories.map(cat => data2[cat] || 0);
+        const allCategories = new Set([...Object.keys(expenses1), ...Object.keys(expenses2)]);
 
-        if (allCategories.length === 0) {
-            chartElement.style.display = 'none';
-            noDataMessage.style.display = 'block';
-            return;
-        } else {
-            chartElement.style.display = 'block';
-            noDataMessage.style.display = 'none';
-        }
+        allCategories.forEach(category => {
+            const amount1 = expenses1[category] || 0;
+            const amount2 = expenses2[category] || 0;
+            const difference = amount1 - amount2;
+            const trend = difference > 0 ? '증가 🔼' : (difference < 0 ? '감소 🔽' : '동일 ➖');
 
-        const ctx = chartElement;
-        if (!ctx) return;
-
-        mainChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: allCategories,
-                datasets: [
-                    {
-                        label: month1,
-                        data: values1,
-                        backgroundColor: '#5D5FEF',
-                    },
-                    {
-                        label: month2,
-                        data: values2,
-                        backgroundColor: '#FF6384',
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { stacked: false },
-                    y: { stacked: false, beginAtZero: true }
-                }
-            }
+            const row = comparisonTableBody.insertRow();
+            row.innerHTML = `
+                <td>${category}</td>
+                <td>${formatCurrency(amount1)}</td>
+                <td>${formatCurrency(amount2)}</td>
+                <td>${formatCurrency(Math.abs(difference))} (${trend})</td>
+            `;
         });
     } catch (error) {
         console.error('Error comparing expenses:', error);
-        chartElement.style.display = 'none';
-        noDataMessage.style.display = 'block';
     }
 }
 
-async function exportCSV() {
-    try {
-        const q = query(
-            collection(db, 'expenses'),
-            where('userId', '==', currentUser.uid),
-            orderBy('date', 'desc')
-        );
-        const querySnapshot = await getDocs(q);
+function exportCSV() {
+    const table = document.getElementById('monthlyTableBody');
+    if (!table) return;
 
-        if (querySnapshot.empty) {
-            showMessage('내보내기 실패', '내보낼 데이터가 없습니다.');
-            return;
-        }
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // Add BOM for Korean characters
+    const headers = ["날짜", "유형", "설명", "카테고리", "금액", "결제수단"];
+    csvContent += headers.join(",") + "\r\n";
 
-        let csvContent = "날짜,유형,내용,카테고리,금액,결제수단\n";
-
-        querySnapshot.forEach(doc => {
-            const exp = doc.data();
-            const row = `${exp.date},${exp.type === 'income' ? '수입' : '지출'},"${exp.description.replace(/"/g, '""')}",${exp.category},${exp.amount},${exp.card}\n`;
-            csvContent += row;
+    const rows = table.querySelectorAll("tr");
+    rows.forEach(row => {
+        const rowData = [];
+        row.querySelectorAll("td:not(:last-child)").forEach(cell => {
+            rowData.push(`"${cell.textContent.replace(/"/g, '""')}"`);
         });
+        csvContent += rowData.join(",") + "\r\n";
+    });
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "가계부_내역.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showMessage('내보내기 완료', 'CSV 파일이 성공적으로 생성되었습니다.');
-
-    } catch (error) {
-        console.error('Error exporting CSV:', error);
-        showMessage('내보내기 실패', 'CSV 파일 생성 중 오류가 발생했습니다.');
-    }
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `가계부_${monthlySelectInput.value}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
-// Change this function to correctly filter by month and year
-async function loadTransactions(month) {
-    if (!currentUser) return;
-    loadingSpinner.style.display = 'flex';
 
-    // Parse the YYYY-MM string to get the year and month
-    const [year, mon] = month.split('-').map(Number);
-
-    // Create Date objects for the start and end of the month
-    // Note: Firestore queries on dates are tricky. Storing dates as ISO strings (YYYY-MM-DD) is more reliable.
-    const startDate = new Date(year, mon - 1, 1);
-    const endDate = new Date(year, mon, 0, 23, 59, 59); // Set to the last millisecond of the last day
-
-    const transactionsColRef = collection(db, 'users', currentUser.uid, 'transactions');
-    const q = query(
-        transactionsColRef,
-        where('date', '>=', startDate.toISOString().slice(0, 10)),
-        where('date', '<=', endDate.toISOString().slice(0, 10)),
-        orderBy('date', 'desc'),
-        orderBy('timestamp', 'desc')
-    );
-    const querySnapshot = await getDocs(q);
-    loadingSpinner.style.display = 'none';
-
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
-
-// New function to load data based on the selected month
-async function loadMonthlyData() {
-    const selectedMonth = monthlySelectInput.value;
-    if (!selectedMonth) return;
-
-    const transactions = await loadTransactions(selectedMonth);
-    displayTransactions(transactions);
-    updateSummary(transactions);
-    updateCharts(transactions);
-}
-
+// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Event listeners
     document.getElementById('loginForm').addEventListener('submit', handleEmailLogin);
     document.getElementById('signupForm').addEventListener('submit', handleEmailSignup);
     document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
     document.getElementById('logoutBtn').addEventListener('click', logout);
-    document.getElementById('signupLink').addEventListener('click', (e) => {
+    document.getElementById('showSignupLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'none';
         document.getElementById('signup-form').style.display = 'block';
     });
-    document.getElementById('loginLink').addEventListener('click', (e) => {
+    document.getElementById('showLoginLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelector('.login-card').style.display = 'block';
         document.getElementById('signup-form').style.display = 'none';
@@ -1146,8 +966,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial setups
     setupNavigation();
     document.getElementById('date').value = getLocalDate();
-        monthlySelectInput.value = new Date().toISOString().slice(0, 7); // Set to current month
-        monthlySelectInput.addEventListener('change', loadMonthlyData);
+    monthlySelectInput.value = new Date().toISOString().slice(0, 7); // Set to current month
+    monthlySelectInput.addEventListener('change', loadMonthlyData);
+
+    // Initial data load when the user logs in
+    loadMonthlyData();
 
     // Dark Mode Toggle
     document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -1159,8 +982,6 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.classList.toggle('fa-moon', !isDarkMode);
     });
 
-    document.getElementById('monthly-select').addEventListener('change', loadMonthlyData);
-
     // Apply saved theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
@@ -1170,6 +991,3 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.classList.remove('fa-moon');
     }
 });
-
-window.openEditModal = openEditModal;
-window.deleteExpense = deleteExpense;
