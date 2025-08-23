@@ -32,6 +32,8 @@ const loadingSpinner = document.getElementById('loading-spinner');
 const loginPage = document.getElementById('login-page');
 const appContainer = document.getElementById('app-container');
 const monthlySelectInput = document.getElementById('monthly-select');
+const monthlyChartElement = document.getElementById('monthlyChart');
+const monthlyChartNoData = document.getElementById('no-monthly-data');
 
 // Authentication functions
 async function handleEmailLogin(e) {
@@ -751,10 +753,6 @@ async function loadMonthlyData() {
     const selectedMonth = monthlySelectInput.value;
     if (!selectedMonth) return;
 
-    const tableBody = document.getElementById('monthlyTableBody');
-    if (!tableBody) return;
-
-    tableBody.innerHTML = '';
     document.getElementById('currentMonthDisplay').textContent = selectedMonth;
 
     try {
@@ -765,23 +763,110 @@ async function loadMonthlyData() {
             orderBy('date', 'desc')
         );
         const querySnapshot = await getDocs(q);
-
+        const expenses = [];
         querySnapshot.forEach(doc => {
-            const exp = doc.data();
-            const row = tableBody.insertRow();
-            row.innerHTML = `
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
-                <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
-            `;
+            expenses.push({ id: doc.id, ...doc.data() });
         });
+        displayTransactions(expenses);
     } catch (error) {
         console.error('Error loading monthly data:', error);
     }
 }
+
+
+function displayTransactions(expenses) {
+    const tableBody = document.getElementById('monthlyTableBody');
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+
+    let totalExpense = 0;
+    let totalIncome = 0;
+
+    expenses.forEach(exp => {
+        const row = tableBody.insertRow();
+        row.innerHTML = `
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        `;
+
+        if (exp.type === 'income') {
+            totalIncome += exp.amount;
+        } else {
+            totalExpense += exp.amount;
+        }
+    });
+
+    updateSummary(totalIncome, totalExpense);
+    updateCharts(expenses);
+}
+
+function updateSummary(totalIncome, totalExpense) {
+    document.getElementById('monthlyIncome').textContent = formatCurrency(totalIncome);
+    document.getElementById('monthlyExpense').textContent = formatCurrency(totalExpense);
+    document.getElementById('monthlyNet').textContent = formatCurrency(totalIncome - totalExpense);
+}
+
+function updateCharts(expenses) {
+    const expenseData = expenses.filter(exp => exp.type === 'expense');
+    const categorySums = expenseData.reduce((acc, curr) => {
+        acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+        return acc;
+    }, {});
+
+    const labels = Object.keys(categorySums);
+    const values = Object.values(categorySums);
+
+    if (mainChart) {
+        mainChart.destroy();
+    }
+
+    if (labels.length === 0) {
+        monthlyChartElement.style.display = 'none';
+        monthlyChartNoData.style.display = 'block';
+        return;
+    } else {
+        monthlyChartElement.style.display = 'block';
+        monthlyChartNoData.style.display = 'none';
+    }
+
+    const ctx = monthlyChartElement.getContext('2d');
+    mainChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '지출 카테고리',
+                data: values,
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 
 async function plotChart() {
     if (mainChart) {
