@@ -1,4 +1,4 @@
-// Korean Personal Finance App (가계부) - Firebase Integration
+// Korean Personal Finance App (가계부) - Firebase Integration - FIXED VERSION
 import { auth, db, googleProvider } from './firebase_config.js';
 import {
     signInWithEmailAndPassword,
@@ -67,7 +67,7 @@ function getUserCards() {
         : DEFAULT_USER_CARDS;
 }
 
-// Function to populate card dropdowns
+// FIXED: Function to populate card dropdowns
 function populateCardDropdowns() {
     const cardSelects = ['card', 'edit-card', 'filterCard'];
     const userCards = getUserCards();
@@ -75,6 +75,9 @@ function populateCardDropdowns() {
     cardSelects.forEach(selectId => {
         const select = document.getElementById(selectId);
         if (!select) return;
+
+        // Store current selected value
+        const currentValue = select.value;
 
         // Clear existing options
         select.innerHTML = '';
@@ -91,7 +94,14 @@ function populateCardDropdowns() {
         if (selectId === 'filterCard') {
             select.firstElementChild.textContent = '전체 결제수단';
         }
+
+        // Restore selected value if it still exists
+        if (currentValue && [...select.options].some(opt => opt.value === currentValue)) {
+            select.value = currentValue;
+        }
     });
+
+    console.log('Card dropdowns populated for user:', currentUser?.email);
 }
 
 // Authentication functions
@@ -325,30 +335,38 @@ function handleEditCategoryChange() {
     }
 }
 
-// Get final category value (handles custom category logic) - FIXED
+// FIXED: Get final category value (handles custom category logic)
 function getFinalCategory() {
     const categorySelect = document.getElementById('category');
     const customCategoryInput = document.getElementById('customCategory');
 
+    if (!categorySelect.value) {
+        throw new Error('카테고리를 선택해주세요.');
+    }
+
     if (categorySelect.value === '기타') {
         const customValue = customCategoryInput.value.trim();
         if (!customValue) {
-            throw new Error('카테고리를 입력해주세요.');
+            throw new Error('카테고리 이름을 입력해주세요.');
         }
         return customValue;
     }
     return categorySelect.value;
 }
 
-// Get final category value for edit modal - FIXED
+// FIXED: Get final category value for edit modal
 function getFinalEditCategory() {
     const categorySelect = document.getElementById('edit-category');
     const customCategoryInput = document.getElementById('editCustomCategory');
 
+    if (!categorySelect.value) {
+        throw new Error('카테고리를 선택해주세요.');
+    }
+
     if (categorySelect.value === '기타') {
         const customValue = customCategoryInput.value.trim();
         if (!customValue) {
-            throw new Error('카테고리를 입력해주세요.');
+            throw new Error('카테고리 이름을 입력해주세요.');
         }
         return customValue;
     }
@@ -519,6 +537,8 @@ function setupNavigation() {
                 loadComparisonChart();
             }
             if (targetId === 'view') {
+                // FIXED: Refresh filter categories when viewing all records
+                populateFilterCategories();
                 refreshTable();
             }
         });
@@ -743,22 +763,18 @@ function plotDashboardChart(data) {
     }
 }
 
-// Data management functions - FIXED
+// FIXED: Data management functions
 async function addExpense(e) {
     e.preventDefault();
 
     try {
         const finalCategory = getFinalCategory();
-        if (!finalCategory) {
-            showMessage('오류', '카테고리를 선택하거나 입력해주세요.');
-            return;
-        }
 
         const newExpense = {
             userId: currentUser.uid,
             type: document.getElementById('type').value,
             date: document.getElementById('date').value || getLocalDate(),
-            description: document.getElementById('description').value,
+            description: document.getElementById('description').value.trim(),
             category: finalCategory,
             amount: parseFloat(document.getElementById('amount').value),
             card: document.getElementById('card').value,
@@ -766,27 +782,36 @@ async function addExpense(e) {
             timestamp: new Date().toISOString()
         };
 
+        // Validate all fields
+        if (!newExpense.description) {
+            throw new Error('내용을 입력해주세요.');
+        }
+        if (!newExpense.card) {
+            throw new Error('결제 수단을 선택해주세요.');
+        }
+        if (isNaN(newExpense.amount) || newExpense.amount <= 0) {
+            throw new Error('올바른 금액을 입력해주세요.');
+        }
+
         await addDoc(collection(db, 'expenses'), newExpense);
         document.getElementById('addForm').reset();
         document.getElementById('date').value = getLocalDate();
         document.getElementById('customCategoryGroup').style.display = 'none';
+
+        // Refresh all relevant components
         renderDashboard();
+        populateFilterCategories(); // This will refresh categories after adding
         refreshTable();
-        populateFilterCategories(); // Refresh categories after adding
         loadMonthlyData();
         showMessage('성공', '항목이 성공적으로 추가되었습니다.');
 
     } catch (error) {
         console.error('Error adding expense:', error);
-        if (error.message === '카테고리를 입력해주세요.') {
-            showMessage('오류', error.message);
-        } else {
-            showMessage('오류', '항목 추가에 실패했습니다.');
-        }
+        showMessage('오류', error.message || '항목 추가에 실패했습니다.');
     }
 }
 
-// Enhanced filter function with additional filters
+// FIXED: Enhanced filter function with additional filters
 async function getFilteredExpenses() {
     const fromDate = document.getElementById('fromDate').value;
     const toDate = document.getElementById('toDate').value;
@@ -813,7 +838,7 @@ async function getFilteredExpenses() {
         return allExpenses.filter(exp => {
             const dateMatch = (!fromDate || exp.date >= fromDate) && (!toDate || exp.date <= toDate);
             const categoryMatch = (!filterCategory || exp.category === filterCategory);
-            const descMatch = (!descSearch || exp.description.toLowerCase().includes(descSearch));
+            const descMatch = (!descSearch || (exp.description && exp.description.toLowerCase().includes(descSearch)));
             const cardMatch = (!filterCard || exp.card === filterCard);
             const amountMatch = exp.amount >= minAmount && exp.amount <= maxAmount;
             return dateMatch && categoryMatch && descMatch && cardMatch && amountMatch;
@@ -838,10 +863,10 @@ async function refreshTable() {
         row.innerHTML = `
             <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.date}</td>
             <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.description || ''}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.category || ''}</td>
             <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
-            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card}</td>
+            <td class="${exp.type === 'income' ? 'text-success' : 'text-danger'}">${exp.card || ''}</td>
             <td>
                 <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
                 <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
@@ -877,9 +902,9 @@ async function openEditModal(expenseId) {
         document.getElementById('edit-id').value = expenseId;
         document.getElementById('edit-type').value = expenseToEdit.type;
         document.getElementById('edit-date').value = expenseToEdit.date;
-        document.getElementById('edit-description').value = expenseToEdit.description;
+        document.getElementById('edit-description').value = expenseToEdit.description || '';
 
-        // Handle category display in edit modal - FIXED
+        // FIXED: Handle category display in edit modal
         const predefinedCategories = ['그로서리', '외식', '주유+주차', '고정비용'];
         const categorySelect = document.getElementById('edit-category');
         const customCategoryGroup = document.getElementById('editCustomCategoryGroup');
@@ -896,7 +921,7 @@ async function openEditModal(expenseId) {
         }
 
         document.getElementById('edit-amount').value = expenseToEdit.amount;
-        document.getElementById('edit-card').value = expenseToEdit.card;
+        document.getElementById('edit-card').value = expenseToEdit.card || '';
 
         editModal.show();
     } catch (error) {
@@ -910,36 +935,39 @@ async function saveEdit() {
 
     try {
         const finalCategory = getFinalEditCategory();
-        if (!finalCategory) {
-            showMessage('오류', '카테고리를 입력해주세요.');
-            return;
-        }
 
         const updatedExpense = {
             type: document.getElementById('edit-type').value,
             date: document.getElementById('edit-date').value,
-            description: document.getElementById('edit-description').value,
+            description: document.getElementById('edit-description').value.trim(),
             category: finalCategory,
             amount: parseFloat(document.getElementById('edit-amount').value),
             card: document.getElementById('edit-card').value,
             month: getMonthKey(document.getElementById('edit-date').value)
         };
 
+        // Validate fields
+        if (!updatedExpense.description) {
+            throw new Error('내용을 입력해주세요.');
+        }
+        if (!updatedExpense.card) {
+            throw new Error('결제 수단을 선택해주세요.');
+        }
+        if (isNaN(updatedExpense.amount) || updatedExpense.amount <= 0) {
+            throw new Error('올바른 금액을 입력해주세요.');
+        }
+
         await updateDoc(doc(db, 'expenses', expenseId), updatedExpense);
 
         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
         renderDashboard();
-        refreshTable();
         populateFilterCategories(); // Refresh categories after editing
+        refreshTable();
         loadMonthlyData();
         showMessage('성공', '항목이 성공적으로 수정되었습니다.');
     } catch (error) {
         console.error('Error updating expense:', error);
-        if (error.message === '카테고리를 입력해주세요.') {
-            showMessage('오류', error.message);
-        } else {
-            showMessage('오류', '항목 수정에 실패했습니다.');
-        }
+        showMessage('오류', error.message || '항목 수정에 실패했습니다.');
     }
 }
 
@@ -950,8 +978,8 @@ async function deleteExpense(expenseId) {
         await deleteDoc(doc(db, 'expenses', expenseId));
 
         renderDashboard();
-        refreshTable();
         populateFilterCategories();
+        refreshTable();
         loadMonthlyData();
         showMessage('성공', '항목이 성공적으로 삭제되었습니다.');
     } catch (error) {
@@ -989,6 +1017,9 @@ async function populateFilterCategories() {
             }
         });
 
+        // Store current selected value
+        const currentValue = categorySelect.value;
+
         // Clear existing options
         categorySelect.innerHTML = '<option value="">전체</option>';
 
@@ -1000,8 +1031,12 @@ async function populateFilterCategories() {
             categorySelect.appendChild(option);
         });
 
-        // Repopulate card dropdown to ensure it's current
-        populateCardDropdowns();
+        // Restore selected value if it still exists
+        if (currentValue && [...categorySelect.options].some(opt => opt.value === currentValue)) {
+            categorySelect.value = currentValue;
+        }
+
+        console.log('Filter categories populated:', Array.from(fixedCategories).length);
 
     } catch (error) {
         console.error('Error populating categories:', error);
@@ -1070,10 +1105,10 @@ async function loadMonthlyData() {
             row.innerHTML = `
                 <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.date}</td>
                 <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.type === 'income' ? '수입' : '지출'}</td>
-                <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.description}</td>
-                <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.category}</td>
+                <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.description || ''}</td>
+                <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.category || ''}</td>
                 <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${formatCurrency(exp.amount)}</td>
-                <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.card}</td>
+                <td class="${exp.type === 'income' ? 'text-success fw-bold' : 'text-danger'}">${exp.card || ''}</td>
                 <td>
                     <button class="btn btn-sm btn-warning" onclick="openEditModal('${exp.id}')"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')"><i class="fas fa-trash-alt"></i></button>
@@ -1324,6 +1359,7 @@ async function exportToCsv() {
         loadingSpinner.style.display = 'none';
     }
 }
+
 // Helper function to show modals
 function showMessageModal(title, body) {
     const modalTitle = document.getElementById('messageModalTitle');
