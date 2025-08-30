@@ -622,7 +622,6 @@ body.dark-mode #monthly .bg-light {
 }
 
 #monthly-summary-boxes .card:hover {
-    transform: translateY(-5px) scale(1.02);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
@@ -704,7 +703,6 @@ body.dark-mode #categoryDetailsList li {
 
 #monthlyStatsList li:hover,
 #categoryDetailsList li:hover {
-    transform: translateX(8px) scale(1.02);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
