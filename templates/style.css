@@ -30,6 +30,9 @@
     --danger-light: #FFEBEE;
     --warning-light: #FFF3E0;
     --info-light: #E1F5FE;
+    --header-text: #FFFFFF;
+    --table-header-bg: #F8F9FA;
+    --table-header-text: #212529;
 }
 
 body.dark-mode {
@@ -53,6 +56,9 @@ body.dark-mode {
     --danger-light: #7F1D1D;
     --warning-light: #78350F;
     --info-light: #164E63;
+    --header-text: #F1F5F9;
+    --table-header-bg: #334155;
+    --table-header-text: #F1F5F9;
 }
 
 body {
@@ -316,6 +322,30 @@ body.dark-mode .login-card {
     border-right: 1px solid var(--border-color);
     box-shadow: var(--shadow);
     flex-shrink: 0;
+}
+
+/* FIXED: Sidebar title/logo visibility */
+.sidebar .d-flex.align-items-center.mb-3 {
+    color: var(--text-color) !important;
+    text-decoration: none !important;
+}
+
+.sidebar .d-flex.align-items-center.mb-3 .fs-4 {
+    color: var(--text-color) !important;
+    font-weight: 700 !important;
+}
+
+.sidebar .d-flex.align-items-center.mb-3 i {
+    color: var(--primary-color) !important;
+}
+
+/* Ensure good contrast in both modes */
+body.dark-mode .sidebar .d-flex.align-items-center.mb-3 {
+    color: var(--header-text) !important;
+}
+
+body.dark-mode .sidebar .d-flex.align-items-center.mb-3 .fs-4 {
+    color: var(--header-text) !important;
 }
 
 .main-content {
@@ -683,7 +713,7 @@ body.dark-mode #categoryDetailsList li:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-/* Enhanced table styling */
+/* FIXED: Enhanced table styling with proper contrast */
 .table {
     --bs-table-bg: var(--card-bg);
     --bs-table-striped-bg: var(--table-stripe);
@@ -693,14 +723,48 @@ body.dark-mode #categoryDetailsList li:hover {
     overflow: hidden;
 }
 
+/* FIXED: Table headers with proper contrast in both modes */
 .table thead th {
-    color: var(--text-color);
-    font-weight: 700;
-    border-bottom: 3px solid var(--primary-color);
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+    font-weight: 700 !important;
+    border-bottom: 3px solid var(--primary-color) !important;
     padding: 1.25rem 1rem;
     font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Specific fix for dark mode table headers */
+body.dark-mode .table thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* FIXED: Ensure table headers in cards are visible */
+.card .table thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+}
+
+body.dark-mode .card .table thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+}
+
+/* FIXED: Monthly table header specifically */
+#monthly .table thead th,
+#monthly .table-dark thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+    border-bottom: 3px solid var(--primary-color) !important;
+}
+
+body.dark-mode #monthly .table thead th,
+body.dark-mode #monthly .table-dark thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
 }
 
 .table tbody tr {
@@ -714,6 +778,7 @@ body.dark-mode #categoryDetailsList li:hover {
 .table tbody td {
     padding: 1rem;
     border-top: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 #monthly .table-striped tbody tr:nth-of-type(odd) {
@@ -855,6 +920,8 @@ body.dark-mode .text-success.fw-bold {
     position: relative;
     overflow: hidden;
     transition: all var(--transition-speed);
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
 }
 
 #theme-toggle:hover {
@@ -862,9 +929,9 @@ body.dark-mode .text-success.fw-bold {
 }
 
 body.dark-mode #theme-toggle {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
-    border-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
 }
 
 body.dark-mode #theme-toggle i::before {
@@ -964,6 +1031,17 @@ body.dark-mode #theme-toggle i::before {
         border-radius: 12px;
         box-shadow: var(--shadow);
     }
+
+    /* FIXED: Mobile table headers */
+    .table-responsive .table thead th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-text) !important;
+    }
+
+    body.dark-mode .table-responsive .table thead th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-text) !important;
+    }
 }
 
 @media (max-width: 480px) {
@@ -981,6 +1059,19 @@ body.dark-mode #theme-toggle i::before {
 
     #monthly-summary-boxes .card-text {
         font-size: 2rem !important;
+    }
+
+    /* FIXED: Small screen table headers */
+    .table thead th {
+        font-size: 0.8rem !important;
+        padding: 1rem 0.5rem !important;
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-text) !important;
+    }
+
+    body.dark-mode .table thead th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-text) !important;
     }
 }
 
@@ -1044,10 +1135,6 @@ body.dark-mode .form-text {
     color: var(--subtle-text) !important;
 }
 
-body.dark-mode .table thead th {
-    color: var(--text-color) !important;
-}
-
 /*
     --------------------------------
     Loading States and Micro-interactions
@@ -1076,4 +1163,124 @@ body.dark-mode .table thead th {
 
 .loading {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/*
+    --------------------------------
+    Additional Contrast Fixes
+    --------------------------------
+*/
+
+/* FIXED: Ensure all card titles are visible */
+.card-header {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border-bottom: none !important;
+}
+
+body.dark-mode .card-header {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.card-header .card-title {
+    color: white !important;
+    margin-bottom: 0;
+}
+
+/* FIXED: Content section headers */
+.content-section h1 {
+    color: var(--text-color) !important;
+    font-weight: 700;
+}
+
+body.dark-mode .content-section h1 {
+    color: var(--header-text) !important;
+}
+
+/* FIXED: Ensure all text in cards is readable */
+.card .fw-bold {
+    color: var(--text-color) !important;
+}
+
+body.dark-mode .card .fw-bold {
+    color: var(--header-text) !important;
+}
+
+/* FIXED: Button text contrast */
+.btn-outline-secondary {
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+body.dark-mode .btn-outline-secondary {
+    color: var(--header-text) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .btn-outline-secondary:hover {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* FIXED: Navigation month display */
+#currentMonthDisplay {
+    color: var(--primary-color) !important;
+    font-weight: 700 !important;
+}
+
+body.dark-mode #currentMonthDisplay {
+    color: var(--primary-color) !important;
+}
+
+/* FIXED: Modal text contrast */
+.modal-content {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.modal-header {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.modal-title {
+    color: white !important;
+}
+
+body.dark-mode .modal-content {
+    background-color: var(--card-bg) !important;
+    color: var(--header-text) !important;
+}
+
+body.dark-mode .modal-header {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* FIXED: Dropdown text in sidebar */
+.dropdown .fw-bold {
+    color: var(--text-color) !important;
+}
+
+body.dark-mode .dropdown .fw-bold {
+    color: var(--header-text) !important;
+}
+
+/* FIXED: All small text elements */
+small {
+    color: var(--subtle-text) !important;
+}
+
+body.dark-mode small {
+    color: var(--subtle-text) !important;
 }
