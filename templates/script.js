@@ -287,6 +287,7 @@ function showApp() {
 
     // Wait for elements to be visible before rendering dashboard
     setTimeout(() => {
+        populateCardDropdowns();
         renderDashboard();
         populateFilterCategories();
     }, 200);
@@ -517,6 +518,15 @@ function setupNavigation() {
                 section.classList.remove('active');
             });
             document.getElementById(targetId).classList.add('active');
+
+            // Add this right after the dashboard becomes active
+            if (targetId === 'dashboard') {
+                populateCardDropdowns(); // Ensure dropdowns are ready
+            }
+
+            if (targetId === 'add') {
+                populateCardDropdowns(); // Add this line
+            }
 
             if (targetId === 'monthly') {
                 const monthlySelectInput = document.getElementById('monthly-select');
