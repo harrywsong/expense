@@ -713,6 +713,40 @@ body.dark-mode #categoryDetailsList li:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
+/* FIXED: Restore color coding for income/expense amounts */
+#monthlyStatsList .text-success,
+#categoryDetailsList .text-success {
+    color: #10B981 !important;
+    font-weight: 600;
+}
+
+#monthlyStatsList .text-danger,
+#categoryDetailsList .text-danger {
+    color: #EF4444 !important;
+    font-weight: 600;
+}
+
+#monthlyStatsList .text-primary,
+#categoryDetailsList .text-primary {
+    color: var(--primary-color) !important;
+    font-weight: 600;
+}
+
+body.dark-mode #monthlyStatsList .text-success,
+body.dark-mode #categoryDetailsList .text-success {
+    color: #34D399 !important;
+}
+
+body.dark-mode #monthlyStatsList .text-danger,
+body.dark-mode #categoryDetailsList .text-danger {
+    color: #F87171 !important;
+}
+
+body.dark-mode #monthlyStatsList .text-primary,
+body.dark-mode #categoryDetailsList .text-primary {
+    color: #818CF8 !important;
+}
+
 /* FIXED: Enhanced table styling with proper contrast */
 .table {
     --bs-table-bg: var(--card-bg);
@@ -1167,7 +1201,7 @@ body.dark-mode .form-text {
 
 /*
     --------------------------------
-    Additional Contrast Fixes
+    Additional Contrast Fixes & Color Coding
     --------------------------------
 */
 
@@ -1283,4 +1317,71 @@ small {
 
 body.dark-mode small {
     color: var(--subtle-text) !important;
+}
+
+/* FIXED: Bootstrap color utilities for proper contrast */
+.text-success {
+    color: #10B981 !important;
+}
+
+.text-danger {
+    color: #EF4444 !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-info {
+    color: #06B6D4 !important;
+}
+
+.text-warning {
+    color: #F59E0B !important;
+}
+
+/* Dark mode versions with better contrast */
+body.dark-mode .text-success {
+    color: #34D399 !important;
+}
+
+body.dark-mode .text-danger {
+    color: #F87171 !important;
+}
+
+body.dark-mode .text-primary {
+    color: #818CF8 !important;
+}
+
+body.dark-mode .text-info {
+    color: #38BDF8 !important;
+}
+
+body.dark-mode .text-warning {
+    color: #FCD34D !important;
+}
+
+/* FIXED: Restore total summary colors at bottom of tables */
+.text-end .text-success,
+.text-end .text-danger {
+    font-weight: 700;
+}
+
+/* FIXED: Category detail amounts color coding */
+#categoryDetailsList .text-danger.fw-bold {
+    color: #EF4444 !important;
+    font-weight: 700 !important;
+}
+
+body.dark-mode #categoryDetailsList .text-danger.fw-bold {
+    color: #F87171 !important;
+}
+
+/* FIXED: Monthly stats list specific color overrides */
+#monthlyStatsList strong {
+    color: var(--text-color) !important;
+}
+
+body.dark-mode #monthlyStatsList strong {
+    color: var(--header-text) !important;
 }
