@@ -33,6 +33,67 @@ const loadingSpinner = document.getElementById('loading-spinner');
 const loginPage = document.getElementById('login-page');
 const appContainer = document.getElementById('app-container');
 
+// User-specific card options
+const SPECIAL_USER_EMAIL = "001023twins@gmail.com";
+const SPECIAL_USER_UID = "VboJPntjS9Mk5sTVePZpolj40gH3";
+
+const SPECIAL_USER_CARDS = [
+    { value: "", text: "선택" },
+    { value: "YL - BoA Debit", text: "YL - BoA Debit" },
+    { value: "YL - BoA", text: "YL - BoA" },
+    { value: "YL - Apple", text: "YL - Apple" },
+    { value: "현금", text: "현금" }
+];
+
+const DEFAULT_USER_CARDS = [
+    { value: "", text: "선택" },
+    { value: "WJ - TD", text: "WJ - TD" },
+    { value: "WJ - BMO Debit", text: "WJ - BMO Debit" },
+    { value: "WJ - BMO", text: "WJ - BMO" },
+    { value: "JH - BMO", text: "JH - BMO" },
+    { value: "WH - BMO Debit", text: "WH - BMO Debit" },
+    { value: "WH - BMO", text: "WH - BMO" },
+    { value: "RW - BMO Debit", text: "RW - BMO Debit" },
+    { value: "RW - BMO", text: "RW - BMO" },
+    { value: "현금", text: "현금" }
+];
+
+// Function to get user-specific cards
+function getUserCards() {
+    if (!currentUser) return DEFAULT_USER_CARDS;
+
+    return (currentUser.email === SPECIAL_USER_EMAIL || currentUser.uid === SPECIAL_USER_UID)
+        ? SPECIAL_USER_CARDS
+        : DEFAULT_USER_CARDS;
+}
+
+// Function to populate card dropdowns
+function populateCardDropdowns() {
+    const cardSelects = ['card', 'edit-card', 'filterCard'];
+    const userCards = getUserCards();
+
+    cardSelects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        // Clear existing options
+        select.innerHTML = '';
+
+        // Add user-specific card options
+        userCards.forEach(card => {
+            const option = document.createElement('option');
+            option.value = card.value;
+            option.textContent = card.text;
+            select.appendChild(option);
+        });
+
+        // For filter dropdown, change first option text
+        if (selectId === 'filterCard') {
+            select.firstElementChild.textContent = '전체 결제수단';
+        }
+    });
+}
+
 // Authentication functions
 async function handleEmailLogin(e) {
     e.preventDefault();
@@ -211,6 +272,9 @@ function showApp() {
     document.getElementById('user-email').textContent = currentUser.email;
     document.getElementById('user-id').textContent = currentUser.uid.substring(0, 8) + '...';
 
+    // Populate user-specific card dropdowns
+    populateCardDropdowns();
+
     // Wait for elements to be visible before rendering dashboard
     setTimeout(() => {
         renderDashboard();
@@ -233,14 +297,15 @@ async function loadUserData() {
 function handleCategoryChange() {
     const categorySelect = document.getElementById('category');
     const customCategoryGroup = document.getElementById('customCategoryGroup');
+    const customCategoryInput = document.getElementById('customCategory');
 
     if (categorySelect.value === '기타') {
         customCategoryGroup.style.display = 'block';
-        document.getElementById('customCategory').required = true;
+        customCategoryInput.required = true;
     } else {
         customCategoryGroup.style.display = 'none';
-        document.getElementById('customCategory').required = false;
-        document.getElementById('customCategory').value = '';
+        customCategoryInput.required = false;
+        customCategoryInput.value = '';
     }
 }
 
@@ -248,31 +313,44 @@ function handleCategoryChange() {
 function handleEditCategoryChange() {
     const categorySelect = document.getElementById('edit-category');
     const customCategoryGroup = document.getElementById('editCustomCategoryGroup');
+    const customCategoryInput = document.getElementById('editCustomCategory');
 
     if (categorySelect.value === '기타') {
         customCategoryGroup.style.display = 'block';
-        document.getElementById('editCustomCategory').required = true;
+        customCategoryInput.required = true;
     } else {
         customCategoryGroup.style.display = 'none';
-        document.getElementById('editCustomCategory').required = false;
-        document.getElementById('editCustomCategory').value = '';
+        customCategoryInput.required = false;
+        customCategoryInput.value = '';
     }
 }
 
-// Get final category value (handles custom category logic)
+// Get final category value (handles custom category logic) - FIXED
 function getFinalCategory() {
     const categorySelect = document.getElementById('category');
+    const customCategoryInput = document.getElementById('customCategory');
+
     if (categorySelect.value === '기타') {
-        return document.getElementById('customCategory').value.trim();
+        const customValue = customCategoryInput.value.trim();
+        if (!customValue) {
+            throw new Error('카테고리를 입력해주세요.');
+        }
+        return customValue;
     }
     return categorySelect.value;
 }
 
-// Get final category value for edit modal
+// Get final category value for edit modal - FIXED
 function getFinalEditCategory() {
     const categorySelect = document.getElementById('edit-category');
+    const customCategoryInput = document.getElementById('editCustomCategory');
+
     if (categorySelect.value === '기타') {
-        return document.getElementById('editCustomCategory').value.trim();
+        const customValue = customCategoryInput.value.trim();
+        if (!customValue) {
+            throw new Error('카테고리를 입력해주세요.');
+        }
+        return customValue;
     }
     return categorySelect.value;
 }
@@ -665,37 +743,46 @@ function plotDashboardChart(data) {
     }
 }
 
-// Data management functions
+// Data management functions - FIXED
 async function addExpense(e) {
     e.preventDefault();
-    const finalCategory = getFinalCategory();
-    if (!finalCategory) {
-        showMessage('Error', 'Please enter a category.');
-        return;
-    }
-    const newExpense = {
-        userId: currentUser.uid,
-        type: document.getElementById('type').value,
-        date: document.getElementById('date').value || getLocalDate(),
-        description: document.getElementById('description').value,
-        category: finalCategory,
-        amount: parseFloat(document.getElementById('amount').value),
-        card: document.getElementById('card').value,
-        month: getMonthKey(document.getElementById('date').value || getLocalDate()),
-        timestamp: new Date().toISOString()
-    };
+
     try {
+        const finalCategory = getFinalCategory();
+        if (!finalCategory) {
+            showMessage('오류', '카테고리를 선택하거나 입력해주세요.');
+            return;
+        }
+
+        const newExpense = {
+            userId: currentUser.uid,
+            type: document.getElementById('type').value,
+            date: document.getElementById('date').value || getLocalDate(),
+            description: document.getElementById('description').value,
+            category: finalCategory,
+            amount: parseFloat(document.getElementById('amount').value),
+            card: document.getElementById('card').value,
+            month: getMonthKey(document.getElementById('date').value || getLocalDate()),
+            timestamp: new Date().toISOString()
+        };
+
         await addDoc(collection(db, 'expenses'), newExpense);
         document.getElementById('addForm').reset();
         document.getElementById('date').value = getLocalDate();
         document.getElementById('customCategoryGroup').style.display = 'none';
         renderDashboard();
         refreshTable();
+        populateFilterCategories(); // Refresh categories after adding
         loadMonthlyData();
         showMessage('성공', '항목이 성공적으로 추가되었습니다.');
+
     } catch (error) {
         console.error('Error adding expense:', error);
-        showMessage('Error', 'Failed to add item.');
+        if (error.message === '카테고리를 입력해주세요.') {
+            showMessage('오류', error.message);
+        } else {
+            showMessage('오류', '항목 추가에 실패했습니다.');
+        }
     }
 }
 
@@ -792,17 +879,20 @@ async function openEditModal(expenseId) {
         document.getElementById('edit-date').value = expenseToEdit.date;
         document.getElementById('edit-description').value = expenseToEdit.description;
 
-        // Handle category display in edit modal
+        // Handle category display in edit modal - FIXED
         const predefinedCategories = ['그로서리', '외식', '주유+주차', '고정비용'];
         const categorySelect = document.getElementById('edit-category');
+        const customCategoryGroup = document.getElementById('editCustomCategoryGroup');
+        const customCategoryInput = document.getElementById('editCustomCategory');
 
         if (predefinedCategories.includes(expenseToEdit.category)) {
             categorySelect.value = expenseToEdit.category;
-            document.getElementById('editCustomCategoryGroup').style.display = 'none';
+            customCategoryGroup.style.display = 'none';
+            customCategoryInput.value = '';
         } else {
             categorySelect.value = '기타';
-            document.getElementById('editCustomCategoryGroup').style.display = 'block';
-            document.getElementById('editCustomCategory').value = expenseToEdit.category;
+            customCategoryGroup.style.display = 'block';
+            customCategoryInput.value = expenseToEdit.category;
         }
 
         document.getElementById('edit-amount').value = expenseToEdit.amount;
@@ -817,35 +907,39 @@ async function openEditModal(expenseId) {
 
 async function saveEdit() {
     const expenseId = document.getElementById('edit-id').value;
-    const finalCategory = getFinalEditCategory();
-
-    if (!finalCategory) {
-        showMessage('오류', '카테고리를 입력해주세요.');
-        return;
-    }
-
-    const updatedExpense = {
-        type: document.getElementById('edit-type').value,
-        date: document.getElementById('edit-date').value,
-        description: document.getElementById('edit-description').value,
-        category: finalCategory,
-        amount: parseFloat(document.getElementById('edit-amount').value),
-        card: document.getElementById('edit-card').value,
-        month: getMonthKey(document.getElementById('edit-date').value)
-    };
 
     try {
+        const finalCategory = getFinalEditCategory();
+        if (!finalCategory) {
+            showMessage('오류', '카테고리를 입력해주세요.');
+            return;
+        }
+
+        const updatedExpense = {
+            type: document.getElementById('edit-type').value,
+            date: document.getElementById('edit-date').value,
+            description: document.getElementById('edit-description').value,
+            category: finalCategory,
+            amount: parseFloat(document.getElementById('edit-amount').value),
+            card: document.getElementById('edit-card').value,
+            month: getMonthKey(document.getElementById('edit-date').value)
+        };
+
         await updateDoc(doc(db, 'expenses', expenseId), updatedExpense);
 
         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
         renderDashboard();
         refreshTable();
-        populateFilterCategories();
+        populateFilterCategories(); // Refresh categories after editing
         loadMonthlyData();
         showMessage('성공', '항목이 성공적으로 수정되었습니다.');
     } catch (error) {
         console.error('Error updating expense:', error);
-        showMessage('오류', '항목 수정에 실패했습니다.');
+        if (error.message === '카테고리를 입력해주세요.') {
+            showMessage('오류', error.message);
+        } else {
+            showMessage('오류', '항목 수정에 실패했습니다.');
+        }
     }
 }
 
@@ -866,14 +960,14 @@ async function deleteExpense(expenseId) {
     }
 }
 
+// FIXED: Enhanced category population with proper custom category handling
 async function populateFilterCategories() {
-    const select = document.getElementById('filterCategory');
-    const cardSelect = document.getElementById('filterCard');
+    const categorySelect = document.getElementById('filterCategory');
 
-    if (!select) return;
+    if (!categorySelect) return;
 
     try {
-        // Define the fixed categories you want to include
+        // Define the fixed categories
         const fixedCategories = new Set([
             '그로서리',
             '외식',
@@ -887,38 +981,28 @@ async function populateFilterCategories() {
         );
         const querySnapshot = await getDocs(q);
 
-        const cards = new Set();
-
-        // Add categories and cards from Firestore to the sets
+        // Add all unique categories from user's expenses
         querySnapshot.forEach(doc => {
             const data = doc.data();
-            if (data.type === 'expense') {
-                fixedCategories.add(data.category);
+            if (data.category && data.category.trim()) {
+                fixedCategories.add(data.category.trim());
             }
-            cards.add(data.card);
         });
 
         // Clear existing options
-        select.innerHTML = '<option value="">전체</option>';
+        categorySelect.innerHTML = '<option value="">전체</option>';
 
         // Convert the set to an array, sort it, and populate the category dropdown
         Array.from(fixedCategories).sort().forEach(cat => {
             const option = document.createElement('option');
             option.value = cat;
             option.textContent = cat;
-            select.appendChild(option);
+            categorySelect.appendChild(option);
         });
 
-        // Populate card filter if it exists
-        if (cardSelect) {
-            cardSelect.innerHTML = '<option value="">전체 결제수단</option>';
-            Array.from(cards).sort().forEach(card => {
-                const option = document.createElement('option');
-                option.value = card;
-                option.textContent = card;
-                cardSelect.appendChild(option);
-            });
-        }
+        // Repopulate card dropdown to ensure it's current
+        populateCardDropdowns();
+
     } catch (error) {
         console.error('Error populating categories:', error);
     }
