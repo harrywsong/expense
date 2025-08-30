@@ -819,17 +819,36 @@ body.dark-mode #monthly .table-dark thead th {
     background-color: var(--table-stripe);
 }
 
-/* Highlight income rows */
+/* FIXED: Highlight income rows with more subtle styling */
 .text-success.fw-bold {
-    background: linear-gradient(135deg, var(--success-light), rgba(var(--success-light), 0.7)) !important;
-    border-radius: 8px;
-    padding: 0.5rem !important;
-    margin: -0.25rem;
-    border-left: 4px solid #10B981;
+    color: #10B981 !important;
+    font-weight: 700 !important;
+    /* Remove the heavy background and border styling */
 }
 
 body.dark-mode .text-success.fw-bold {
-    background: linear-gradient(135deg, var(--success-light), rgba(var(--success-light), 0.8)) !important;
+    color: #34D399 !important;
+    font-weight: 700 !important;
+}
+
+/* FIXED: Income table rows - subtle background highlight instead of heavy borders */
+.table tbody tr.income-row {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02)) !important;
+    border-left: 4px solid #10B981 !important;
+}
+
+body.dark-mode .table tbody tr.income-row {
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(52, 211, 153, 0.05)) !important;
+    border-left: 4px solid #34D399 !important;
+}
+
+/* FIXED: Income cells should not have individual borders/backgrounds */
+.table tbody tr td.text-success.fw-bold {
+    background: transparent !important;
+    border: none !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
 }
 
 /*
