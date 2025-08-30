@@ -851,6 +851,32 @@ body.dark-mode .table tbody tr.income-row {
     border-radius: 0 !important;
 }
 
+/* FIXED: Monthly table income rows - more specific selectors */
+#monthly .table tbody tr td.text-success,
+#monthlyTableBody tr td.text-success {
+    color: #10B981 !important;
+    font-weight: 700 !important;
+}
+
+#monthly .table tbody tr td.text-success.fw-bold,
+#monthlyTableBody tr td.text-success.fw-bold {
+    color: #10B981 !important;
+    font-weight: 700 !important;
+    background: transparent !important;
+}
+
+body.dark-mode #monthly .table tbody tr td.text-success,
+body.dark-mode #monthlyTableBody tr td.text-success {
+    color: #34D399 !important;
+    font-weight: 700 !important;
+}
+
+body.dark-mode #monthly .table tbody tr td.text-success.fw-bold,
+body.dark-mode #monthlyTableBody tr td.text-success.fw-bold {
+    color: #34D399 !important;
+    font-weight: 700 !important;
+}
+
 /*
     --------------------------------
     Forms & Inputs
